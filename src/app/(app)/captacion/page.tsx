@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
+import { serviceImage } from '@/lib/images';
+import Link from 'next/link';
 import { estimateLeadAction, startSequenceAction } from './actions';
 
 export default async function CaptacionPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string; lo?: string; hi?: string }> }) {
@@ -53,6 +55,20 @@ export default async function CaptacionPage({ searchParams }: { searchParams: Pr
               Ver estimado y crear lead
             </button>
           </form>
+          <div className="svc-grid">
+            {['Azotea de casa', 'Azotea comercial / oficina', 'Nave industrial', 'Cisterna'].map((t) => (
+              <figure className="svc" key={t}>
+                <img src={serviceImage(t, 480)} alt={t} />
+                <figcaption>{t}</figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="photo-credit">
+            Fotografías:{' '}
+            <Link href="/creditos" target="_blank">
+              Unsplash · créditos
+            </Link>
+          </div>
         </div>
 
         <div className="card panel">

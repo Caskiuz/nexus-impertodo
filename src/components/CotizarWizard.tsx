@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { computeQuote, validations, type SystemDef, type QuoteInput } from '@/lib/calc';
 import { fmt, fmt2 } from '@/lib/constants';
 import { systemImage, elementImage } from '@/lib/images';
+import PhotoCredit from '@/components/PhotoCredit';
 import { saveQuoteAction } from '@/actions/quotes';
 
 interface ClientLite {
@@ -303,6 +304,7 @@ export default function CotizarWizard({
               <div>
                 <b>{element}</b>
                 <div className="mini">Servicio seleccionado · el diagnóstico ajusta las partidas previas.</div>
+                <PhotoCredit kind="element" id={element} />
               </div>
             </div>
             <div className="row3">
@@ -393,7 +395,8 @@ export default function CotizarWizard({
                 { letter: 'B' as const, key: optB, set: setOptB, comp: cB, sysDef: sysB }
               ].map(({ letter, key, set, comp, sysDef }) => (
                 <div key={letter} className={`opt ${selected === letter ? 'sel' : ''}`} onClick={() => setSelected(letter)}>
-                  <img className="opt-img" src={systemImage(sysDef.key)} alt={sysDef.name} />
+                  <img className="opt-img" src={systemImage(sysDef.key, 900)} alt={sysDef.name} />
+                  <PhotoCredit kind="system" id={sysDef.key} />
                   <span className="reco" style={letter === 'B' ? undefined : { background: 'var(--gris)' }}>
                     {letter === 'B' ? 'Recomendada' : 'Lo que pidió'}
                   </span>

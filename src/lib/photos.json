@@ -1,0 +1,96 @@
+{
+  "systems": {
+    "acr10": {
+      "base": "https://images.unsplash.com/photo-1550002233-59d811d29b95",
+      "photographer": "Hemerson Coelho",
+      "page": "https://unsplash.com/photos/yellow-paint-can-beside-blue-wall-_HFP0eMwYWY",
+      "id": "_HFP0eMwYWY"
+    },
+    "acr7": {
+      "base": "https://images.unsplash.com/photo-1745665777586-09381ba528d6",
+      "photographer": "Ravigopal Kesari",
+      "page": "https://unsplash.com/photos/a-painter-is-painting-a-white-wall-ddzrK5r1N6o",
+      "id": "ddzrK5r1N6o"
+    },
+    "sbs45": {
+      "base": "https://images.unsplash.com/photo-1751846266678-67c3cb394813",
+      "photographer": "Rodrigo Araya",
+      "page": "https://unsplash.com/photos/a-blue-curved-structure-contrasts-the-bright-sky-3KPZ61S1UD8",
+      "id": "3KPZ61S1UD8"
+    },
+    "pu": {
+      "base": "https://images.unsplash.com/photo-1674485117944-08d58861b2ba",
+      "photographer": "Ömer Haktan Bulut",
+      "page": "https://unsplash.com/photos/a-man-in-a-white-suit-spraying-water-on-a-roof-MCMWHK-WEZU",
+      "id": "MCMWHK-WEZU"
+    },
+    "polu": {
+      "base": "https://images.unsplash.com/photo-1674485190969-4347f72aad0e",
+      "photographer": "Ömer Haktan Bulut",
+      "page": "https://unsplash.com/photos/a-man-in-white-coveralls-painting-a-wall-with-blue-paint-h2tPZnGUpo4",
+      "id": "h2tPZnGUpo4"
+    },
+    "sil": {
+      "base": "https://images.unsplash.com/photo-1642173082271-c88bd536ad06",
+      "photographer": "JOSHUA COLEMAN",
+      "page": "https://unsplash.com/photos/a-red-fire-hydrant-sitting-on-the-side-of-a-building-zKfqUiyUE9A",
+      "id": "zKfqUiyUE9A"
+    },
+    "cem": {
+      "base": "https://images.unsplash.com/photo-1673865641469-34498379d8af",
+      "photographer": "Bermix Studio",
+      "page": "https://unsplash.com/photos/a-man-in-blue-overalls-working-on-cement-nZZfP9QiQ6w",
+      "id": "nZZfP9QiQ6w"
+    },
+    "ais": {
+      "base": "https://images.unsplash.com/photo-1657195721935-e73e545a2aae",
+      "photographer": "Jametlene Reskp",
+      "page": "https://unsplash.com/photos/a-close-up-of-a-roof-bXh4X2TjZ4U",
+      "id": "bXh4X2TjZ4U"
+    },
+    "epx": {
+      "base": "https://images.unsplash.com/photo-1652305461546-bf0a76934433",
+      "photographer": "engin akyurt",
+      "page": "https://unsplash.com/photos/a-close-up-of-a-grey-surface-oVdcLa0GEU8",
+      "id": "oVdcLa0GEU8"
+    }
+  },
+  "elements": {
+    "losa-no-transitable": {
+      "base": "https://images.unsplash.com/photo-1768677432858-b9a8608dd849",
+      "photographer": "Toni  Reed",
+      "page": "https://unsplash.com/photos/rooftops-of-modern-buildings-in-a-city-Ba_o2rvI5aY",
+      "id": "Ba_o2rvI5aY"
+    },
+    "losa-transitable": {
+      "base": "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8",
+      "photographer": "garrett parker",
+      "page": "https://unsplash.com/photos/patio-set-in-terrace-overlooking-city-xQWLtlQb7L0",
+      "id": "xQWLtlQb7L0"
+    },
+    "nave": {
+      "base": "https://images.unsplash.com/photo-1602064828974-fcac67d33f4e",
+      "photographer": "Saj Shafique",
+      "page": "https://unsplash.com/photos/white-and-black-striped-textile-A6iKktKiiLk",
+      "id": "A6iKktKiiLk"
+    },
+    "cisterna": {
+      "base": "https://images.unsplash.com/photo-1761025198913-a75dc7699a63",
+      "photographer": "Michael Chacon",
+      "page": "https://unsplash.com/photos/large-circular-structure-under-construction-with-cranes-tf8EJFlPDhk",
+      "id": "tf8EJFlPDhk"
+    },
+    "muro": {
+      "base": "https://images.unsplash.com/photo-1761637823941-0ffae96ec487",
+      "photographer": "Sergej *****",
+      "page": "https://unsplash.com/photos/stone-wall-with-plants-in-the-foreground-f7poIvVWtfg",
+      "id": "f7poIvVWtfg"
+    },
+    "piso": {
+      "base": "https://images.unsplash.com/photo-1772305336606-989a457ffbae",
+      "photographer": "Craftsman Concrete Floors",
+      "page": "https://unsplash.com/photos/empty-industrial-warehouse-with-polished-concrete-floor-NADTQRbS0s4",
+      "id": "NADTQRbS0s4"
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
 import { inventoryImage } from '@/lib/images';
+import Link from 'next/link';
 import { addStockAction, suggestOrderAction } from './actions';
 
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
@@ -72,7 +73,7 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
                 <tr key={i.id}>
                   <td>
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                      <img className="img-thumb" src={inventoryImage(i.name)} alt={i.name} />
+                      <img className="img-thumb" src={inventoryImage(i.name, 480)} alt={i.name} />
                       <b>{i.name}</b>
                     </div>
                   </td>
@@ -113,6 +114,8 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
       </div>
       <div className="mini" style={{ marginTop: 10 }}>
         El descuento por OT se registra al avanzar fases en Obra. La recepción real de material se captura aquí.
+        <br />
+        Fotografías: <Link href="/creditos" target="_blank">Unsplash · créditos</Link>
       </div>
     </>
   );

@@ -331,3 +331,7 @@ img{max-width:100%;height:auto}
   .unitbox label{display:block;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:#7fa3c0;font-weight:700;margin-bottom:4px}
   .unitbox select{width:100%;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:7px 8px;font-size:16px}
 }
+
+/* Créditos de fotografías (Unsplash) */
+.photo-credit{font-size:9.5px;line-height:1.35;color:var(--gris);margin:3px 0 5px}
+.photo-credit a{color:var(--gris);text-decoration:underline}

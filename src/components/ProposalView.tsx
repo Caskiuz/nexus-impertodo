@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { computeQuote, type QuoteInput, type SystemDef } from '@/lib/calc';
 import { fmt, fmt2, isoDate } from '@/lib/constants';
 import { systemImage } from '@/lib/images';
+import PhotoCredit from './PhotoCredit';
 import PrintButton from './PrintButton';
 import CopyLink from './CopyLink';
 import { chooseOptionAction, approveProposalAction } from '@/actions/public';
@@ -80,7 +81,8 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
               { letter: 'A' as const, sys: sysA, comp: cA, label: 'Económica' }
             ].map(({ letter, sys, comp, label }) => (
               <div className={`propopt ${quote.selected === letter ? 'pick' : ''}`} key={letter}>
-                <img className="prop-img" src={systemImage(sys.key)} alt={sys.name} />
+                <img className="prop-img" src={systemImage(sys.key, 900)} alt={sys.name} />
+                <PhotoCredit kind="system" id={sys.key} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                   <b style={{ fontSize: 13 }}>
                     {label} · {sys.short}
@@ -127,6 +129,12 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
             </div>
             <div className="mini">
               Sin cobro en línea: el anticipo se solicita por transferencia y se registra manualmente en Caja. Fase 2: pasarela de pagos.
+            </div>
+            <div className="photo-credit">
+              Fotografías:{' '}
+              <a href="/creditos" target="_blank" rel="noreferrer">
+                Unsplash · créditos
+              </a>
             </div>
           </div>
         </div>

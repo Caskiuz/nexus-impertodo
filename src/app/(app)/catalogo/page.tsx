@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
 import { systemImage } from '@/lib/images';
+import Link from 'next/link';
 import { saveSettingsAction, saveCostSheetAction } from './actions';
 
 export default async function CatalogoPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string; sys?: string }> }) {
@@ -101,7 +102,7 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
                 <tr key={s.key}>
                   <td>
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                      <img className="img-thumb" src={systemImage(s.key)} alt={s.short} />
+                      <img className="img-thumb" src={systemImage(s.key, 480)} alt={s.short} />
                       <div>
                         <b>{s.short}</b>
                         <div className="mini">{s.name}</div>
@@ -147,6 +148,11 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
         </table>
         <div className="mini" style={{ padding: 10 }}>
           Precios de venta históricos 2025–2026. Costos y mermas editables con evidencia. &quot;Mínimo&quot; = precio con el piso de margen.
+          <br />
+          Fotografías del catálogo:{' '}
+          <Link href="/creditos" target="_blank">
+            Unsplash · créditos
+          </Link>
         </div>
       </div>
 

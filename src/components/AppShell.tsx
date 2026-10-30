@@ -151,7 +151,13 @@ export default function AppShell({
             );
           })}
         </nav>
-        <div className="sidefoot">v3 · datos demo · {activeUnit?.name || 'Todas las unidades'}</div>
+        <div className="sidefoot">
+          v3 · datos demo · {activeUnit?.name || 'Todas las unidades'}
+          <br />
+          <Link href="/creditos" style={{ color: '#9fc3dd', textDecoration: 'underline' }}>
+            Créditos de fotos
+          </Link>
+        </div>
       </aside>
 
       <div className="main">
