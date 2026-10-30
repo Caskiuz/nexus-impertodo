@@ -146,6 +146,7 @@ export async function POST(request: Request) {
     'Usa solo los datos del contexto; no inventes cifras. Si faltan datos, dilo.',
     'Entrega 3 a 5 recomendaciones accionables, concretas y priorizadas.',
     'La IA sugiere, el humano aprueba: no ejecutes acciones, no envíes, no pagues, no contabilices.',
+    'Nunca recomiendes autorizar documentos con alerta (sin CFDI, 69-B, datos incompletos): recomienda revisión, corrección o rechazo.',
     'Módulos: Hoy, Cotizar, Clientes & Techos, Propuesta viva, Captación, Obra / OT, Inventario, Caja / Contabilidad, Cobrar, Aprobaciones, Licitaciones, Franquicias, Central (red), Catálogo / Precios, Agentes IA, Notificaciones.'
   ].join('\n');
 

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
 import AgentCards from '@/components/AgentCards';
+import PriorityAI from '@/components/PriorityAI';
 
 export default async function AgentesPage() {
   const user = await requireUser();
@@ -26,7 +27,7 @@ export default async function AgentesPage() {
   const findings = [
     ...staleQuotes.map((q) => ({ kind: 'warn', text: `Cotización ${q.folio} · ${q.clientName} sin respuesta hace más de 14 días. Sugerido: seguimiento con comparativo $/m²/año.` })),
     ...lowMargin.map((q) => ({ kind: 'bad', text: `Margen bajo piso en ${q.folio} (${(q.margin * 100).toFixed(0)}% vs ${q.floor}%). Requiere autorización de gerencia.` })),
-    ...flaggedDocs.map((d) => ({ kind: 'bad', text: `Documento con alerta: ${d.supplier} — ${d.warn}. Revisión obligatoria.` })),
+    ...flaggedDocs.map((d) => ({ kind: 'bad', text: `Documento con alerta: ${d.supplier} — ${String(d.warn).replace(/\.$/, '')}. Revisión obligatoria.` })),
     ...(pendingDocs.length ? [{ kind: 'info', text: `${pendingDocs.length} comprobantes en bandeja. Los de confianza ≥90% sin alerta pueden revisarse en lote.` }] : []),
     ...lowStock.map((i) => ({ kind: 'warn', text: `Stock bajo: ${i.name} (${i.stock}/${i.min}). Pedido sugerido disponible.` })),
     ...tenders.slice(0, 1).map((t) => ({ kind: 'info', text: `Licitación ${t.convener} con match ${t.match}% · apertura ${dateStr(t.openingDate)}.` }))
@@ -47,8 +48,9 @@ export default async function AgentesPage() {
       <div className="two" style={{ marginTop: 14 }}>
         <div className="card panel">
           <div className="sec">
-            Revisión IA <span className="badge">{findings.length} hallazgos</span>
+            Detecciones automáticas <span className="badge">{findings.length} hallazgos · reglas en vivo</span>
           </div>
+          <PriorityAI />
           {findings.length === 0 && <div className="alert g">Sin hallazgos. Operación al día.</div>}
           {findings.map((f, i) => (
             <div className={`alert ${f.kind === 'bad' ? 'r' : f.kind === 'warn' ? 'y' : 'b'}`} key={i}>
@@ -59,7 +61,9 @@ export default async function AgentesPage() {
 
         <div className="stack">
           <div className="card panel">
-            <div className="sec">Bitácora IA / auditoría</div>
+            <div className="sec">
+            Bitácora y auditoría <span className="badge">registros verificables</span>
+          </div>
             {audit.map((a) => (
               <div className="rule" key={a.id}>
                 <span className="ic info">i</span>
@@ -74,7 +78,9 @@ export default async function AgentesPage() {
             {!audit.length && <div className="mini">Sin registros.</div>}
           </div>
           <div className="card panel">
-            <div className="sec">Eventos de negocio recientes</div>
+            <div className="sec">
+              Eventos de negocio <span className="badge">libro de comisión y regalías</span>
+            </div>
             {events.map((ev) => (
               <div className="rule" key={ev.id}>
                 <span className={`ic ${ev.type === 'FRANCHISE_ACQUIRED' ? 'ok' : ev.type === 'ROYALTY_CALCULATED' ? 'info' : 'warn'}`}>•</span>

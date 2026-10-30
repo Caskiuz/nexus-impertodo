@@ -67,6 +67,11 @@ export default function AgentCards() {
         ))}
       </div>
 
+      <div className="mini" style={{ marginTop: 8 }}>
+        Haz clic en una tarjeta para ejecutar su análisis con IA. El resultado aparece debajo de las tarjetas, no en la
+        bitácora ni en los eventos de negocio (esos son registros auditables).
+      </div>
+
       {Object.keys(results).length > 0 && (
         <div className="card panel" style={{ marginTop: 14 }}>
           <div className="sec">
