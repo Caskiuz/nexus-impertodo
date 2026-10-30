@@ -35,6 +35,7 @@ Propuesta pública demo: `/p/2026-042`
 - **Central** — registro de ventas timbradas, cálculo de regalías (con delta para no duplicar), fees, pedidos de producto.
 - **Comisión del 20% (panel DEV)** — libro mayor automático sobre **toda la red** (cuota de franquicia, regalías, fees y producto). Cada evento crea un asiento `DEVENGADA` y un aviso. El cobro se marca manualmente (sin pasarela).
 - **Bandeja interna de notificaciones** — campana con contador + bandeja completa; cada venta/franquicia/regalía incluye el monto de tu comisión.
+- **Experiencia tipo app (PWA)** — diseño responsive completo (móvil, tablet y escritorio), navegación inferior en celular, menú lateral deslizable, safe areas de iOS, manifest e iconos para instalar la app desde el navegador.
 
 ## 🧱 Stack
 

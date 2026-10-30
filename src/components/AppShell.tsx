@@ -85,8 +85,31 @@ export default function AppShell({
 
   const activeUnit = units.find((u) => u.id === activeUnitId);
 
+  const mobileNav: { href: string; icon: string; label: string }[] =
+    user.role === 'SUPERVISOR'
+      ? [
+          { href: '/hoy', icon: '📊', label: 'Hoy' },
+          { href: '/cotizar', icon: '🧠', label: 'Cotizar' },
+          { href: '/obra', icon: '🏗️', label: 'Obra' },
+          { href: '/inventario', icon: '📦', label: 'Inventario' }
+        ]
+      : user.role === 'CONTADOR'
+        ? [
+            { href: '/hoy', icon: '📊', label: 'Hoy' },
+            { href: '/caja', icon: '🧾', label: 'Caja' },
+            { href: '/cobrar', icon: '💵', label: 'Cobrar' },
+            { href: '/aprobaciones', icon: '✅', label: 'Aprobar' }
+          ]
+        : [
+            { href: '/hoy', icon: '📊', label: 'Hoy' },
+            { href: '/cotizar', icon: '🧠', label: 'Cotizar' },
+            { href: '/obra', icon: '🏗️', label: 'Obra' },
+            { href: '/central', icon: '🏢', label: 'Central' }
+          ];
+
   return (
     <div className="app">
+      {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
       <aside className={`sidebar ${open ? 'open' : ''}`} id="sidebar">
         <div className="brand">
           <div className="logo">
@@ -97,6 +120,19 @@ export default function AppShell({
             </div>
           </div>
         </div>
+        {isCentral && (
+          <form action={setActiveUnit} className="unitbox">
+            <label>Unidad activa</label>
+            <select name="unit" defaultValue={activeUnitId || ''} onChange={(e) => e.currentTarget.form?.requestSubmit()}>
+              <option value="">Todas las unidades</option>
+              {units.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} · {u.kind}
+                </option>
+              ))}
+            </select>
+          </form>
+        )}
         <nav className="nav">
           {groups.map((g) => {
             const items = g.items.filter((i) => !i.roles || i.roles.includes(user.role));
@@ -123,6 +159,10 @@ export default function AppShell({
           <button className="burger" onClick={() => setOpen((v) => !v)} aria-label="Menú">
             ☰
           </button>
+          <div className="mobrand">
+            <div className="mark">I</div>
+            IMPERTODO
+          </div>
           <CommandBar />
           {isCentral ? (
             <form action={setActiveUnit} className="seg">
@@ -161,6 +201,20 @@ export default function AppShell({
         </header>
         <div className="content">{children}</div>
       </div>
+
+      <nav className="mobnav" aria-label="Navegación móvil">
+        {mobileNav.map((item) => (
+          <Link key={item.href} href={item.href} className={pathname === item.href ? 'on' : ''}>
+            <span className="ic">{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
+        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú">
+          <span className="ic">☰</span>
+          Menú
+        </button>
+      </nav>
+
       <Assistant />
     </div>
   );
