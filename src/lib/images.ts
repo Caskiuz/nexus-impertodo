@@ -26,6 +26,25 @@ export const elementImage = (el: string, width = 1200): string => {
 export const systemCredit = (key: string) => systemPhoto(key);
 export const elementCredit = (el: string) => elementPhoto(elementSlug(el));
 
+export const systemSvg = (key: string) => `/img/sistemas/${key}.svg`;
+export const elementSvg = (el: string) => `/img/elementos/${elementSlug(el)}.svg`;
+
+export function serviceSvg(tipo: string): string {
+  if (/nave/i.test(tipo)) return elementSvg('Nave / lámina');
+  if (/cisterna/i.test(tipo)) return elementSvg('Cisterna');
+  if (/comercial|oficina/i.test(tipo)) return elementSvg('Losa transitable');
+  return elementSvg('Losa de azotea no transitable');
+}
+
+export function inventorySvg(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('acrílico')) return systemSvg(n.includes('7') ? 'acr7' : 'acr10');
+  if (n.includes('rollo') || n.includes('sbs') || n.includes('membrana')) return systemSvg('sbs45');
+  if (n.includes('cemento')) return systemSvg('cem');
+  if (n.includes('poliurea')) return systemSvg('polu');
+  return '/img/productos/generico.svg';
+}
+
 export function serviceImage(tipo: string, width = 640): string {
   if (/nave/i.test(tipo)) return elementImage('Nave / lámina', width);
   if (/cisterna/i.test(tipo)) return elementImage('Cisterna', width);

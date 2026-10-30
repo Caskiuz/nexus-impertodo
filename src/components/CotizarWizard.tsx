@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { computeQuote, validations, type SystemDef, type QuoteInput } from '@/lib/calc';
 import { fmt, fmt2 } from '@/lib/constants';
-import { systemImage, elementImage } from '@/lib/images';
+import { systemImage, elementImage, systemSvg, elementSvg } from '@/lib/images';
+import SmartImage from '@/components/SmartImage';
 import PhotoCredit from '@/components/PhotoCredit';
 import { saveQuoteAction } from '@/actions/quotes';
 
@@ -295,10 +296,11 @@ export default function CotizarWizard({
             <h2>Medición y área desarrollada</h2>
             <div className="hint">El área desarrollada suma pretiles, chaflanes, bajantes, domos y ductos: hasta 15% que se dejan de cobrar.</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <img
+              <SmartImage
                 className="img-thumb"
                 style={{ width: 104, height: 64, objectFit: 'cover' }}
-                src={elementImage(element)}
+                src={elementImage(element, 480)}
+                fallback={elementSvg(element)}
                 alt={element}
               />
               <div>
@@ -395,7 +397,12 @@ export default function CotizarWizard({
                 { letter: 'B' as const, key: optB, set: setOptB, comp: cB, sysDef: sysB }
               ].map(({ letter, key, set, comp, sysDef }) => (
                 <div key={letter} className={`opt ${selected === letter ? 'sel' : ''}`} onClick={() => setSelected(letter)}>
-                  <img className="opt-img" src={systemImage(sysDef.key, 900)} alt={sysDef.name} />
+                  <SmartImage
+                    className="opt-img"
+                    src={systemImage(sysDef.key, 900)}
+                    fallback={systemSvg(sysDef.key)}
+                    alt={sysDef.name}
+                  />
                   <PhotoCredit kind="system" id={sysDef.key} />
                   <span className="reco" style={letter === 'B' ? undefined : { background: 'var(--gris)' }}>
                     {letter === 'B' ? 'Recomendada' : 'Lo que pidió'}

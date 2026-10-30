@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
-import { systemImage } from '@/lib/images';
+import { systemImage, systemSvg } from '@/lib/images';
+import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
 import { saveSettingsAction, saveCostSheetAction } from './actions';
 
@@ -102,7 +103,7 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
                 <tr key={s.key}>
                   <td>
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                      <img className="img-thumb" src={systemImage(s.key, 480)} alt={s.short} />
+                      <SmartImage className="img-thumb" src={systemImage(s.key, 480)} fallback={systemSvg(s.key)} alt={s.short} />
                       <div>
                         <b>{s.short}</b>
                         <div className="mini">{s.name}</div>

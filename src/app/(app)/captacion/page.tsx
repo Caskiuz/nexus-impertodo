@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
-import { serviceImage } from '@/lib/images';
+import { serviceImage, serviceSvg } from '@/lib/images';
+import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
 import { estimateLeadAction, startSequenceAction } from './actions';
 
@@ -58,7 +59,7 @@ export default async function CaptacionPage({ searchParams }: { searchParams: Pr
           <div className="svc-grid">
             {['Azotea de casa', 'Azotea comercial / oficina', 'Nave industrial', 'Cisterna'].map((t) => (
               <figure className="svc" key={t}>
-                <img src={serviceImage(t, 480)} alt={t} />
+                <SmartImage src={serviceImage(t, 480)} fallback={serviceSvg(t)} alt={t} />
                 <figcaption>{t}</figcaption>
               </figure>
             ))}

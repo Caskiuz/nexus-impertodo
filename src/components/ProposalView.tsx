@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { computeQuote, type QuoteInput, type SystemDef } from '@/lib/calc';
 import { fmt, fmt2, isoDate } from '@/lib/constants';
-import { systemImage } from '@/lib/images';
+import { systemImage, systemSvg } from '@/lib/images';
+import SmartImage from './SmartImage';
 import PhotoCredit from './PhotoCredit';
 import PrintButton from './PrintButton';
 import CopyLink from './CopyLink';
@@ -81,7 +82,12 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
               { letter: 'A' as const, sys: sysA, comp: cA, label: 'Económica' }
             ].map(({ letter, sys, comp, label }) => (
               <div className={`propopt ${quote.selected === letter ? 'pick' : ''}`} key={letter}>
-                <img className="prop-img" src={systemImage(sys.key, 900)} alt={sys.name} />
+                <SmartImage
+                  className="prop-img"
+                  src={systemImage(sys.key, 900)}
+                  fallback={systemSvg(sys.key)}
+                  alt={sys.name}
+                />
                 <PhotoCredit kind="system" id={sys.key} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                   <b style={{ fontSize: 13 }}>

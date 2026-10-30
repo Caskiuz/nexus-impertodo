@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
-import { inventoryImage } from '@/lib/images';
+import { inventoryImage, inventorySvg } from '@/lib/images';
+import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
 import { addStockAction, suggestOrderAction } from './actions';
 
@@ -73,7 +74,7 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
                 <tr key={i.id}>
                   <td>
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                      <img className="img-thumb" src={inventoryImage(i.name, 480)} alt={i.name} />
+                      <SmartImage className="img-thumb" src={inventoryImage(i.name, 480)} fallback={inventorySvg(i.name)} alt={i.name} />
                       <b>{i.name}</b>
                     </div>
                   </td>
