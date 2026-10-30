@@ -1,0 +1,571 @@
+<title>ProSeal OS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* v0.2 — Layout: barra superior con comando, 3 pestañas + Más, una vista a la vez; tenant/rol por data-attr */
+:root{--bg:#f6f5f1;--surface:#fff;--surface-2:#eeece6;--line:#d9d6cc;--fg:#17171a;--muted:#6b6a63;--accent:#F4B81E;--on-accent:#141414;--accent-soft:#fdf1cf;--ink:#141414;--on-ink:#fff;--ok:#1f8a4c;--ok-soft:#dff3e6;--warn:#c77a00;--warn-soft:#fdebc8;--bad:#c23a2b;--bad-soft:#f9dcd8;--info:#2b6cb0;--info-soft:#dbe8f8;--display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;--body:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--radius:10px;--shadow:0 1px 2px rgba(20,20,20,.06),0 6px 20px rgba(20,20,20,.06)}
+:root[data-tenant="proseal"]{--accent:#0E3B55;--on-accent:#fff;--accent-soft:#dbe6ee;--ink:#0E3B55;--on-ink:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141416;--surface:#1d1d21;--surface-2:#26262b;--line:#36363d;--fg:#f0efe9;--muted:#a5a49c;--accent-soft:#3a2f10;--ink:#f4b81e;--on-ink:#141414;--ok-soft:#163a25;--warn-soft:#3f2a08;--bad-soft:#44201b;--info-soft:#1b2d45;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);color-scheme:dark}:root:not([data-theme="light"])[data-tenant="proseal"]{--accent:#4FA3D1;--on-accent:#0b1a24;--accent-soft:#17303f;--ink:#4FA3D1;--on-ink:#0b1a24}}
+:root[data-theme="dark"]{--bg:#141416;--surface:#1d1d21;--surface-2:#26262b;--line:#36363d;--fg:#f0efe9;--muted:#a5a49c;--accent-soft:#3a2f10;--ink:#f4b81e;--on-ink:#141414;--ok-soft:#163a25;--warn-soft:#3f2a08;--bad-soft:#44201b;--info-soft:#1b2d45;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);color-scheme:dark}
+:root[data-theme="dark"][data-tenant="proseal"]{--accent:#4FA3D1;--on-accent:#0b1a24;--accent-soft:#17303f;--ink:#4FA3D1;--on-ink:#0b1a24}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;line-height:1.05;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:30px}h2{font-size:24px}h3{font-size:18px}h4{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}button{font:inherit;color:inherit}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}.small{font-size:12px}.example{font-size:11px;color:var(--muted);font-style:italic}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;flex:none}
+.brand .name{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;white-space:nowrap;line-height:1}
+.brand .name small{font-family:var(--body);font-weight:500;font-size:10px;color:var(--muted);letter-spacing:.08em;display:block;margin-top:2px}
+.cmd{flex:1;min-width:220px;display:flex;gap:6px;align-items:center;background:var(--surface-2);border-radius:999px;padding:4px 6px 4px 12px}
+.cmd input{border:0;background:transparent;padding:6px 0}
+.cmd button{border:0;background:var(--ink);color:var(--on-ink);border-radius:999px;width:32px;height:32px;cursor:pointer;flex:none}
+.topr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;background:var(--surface);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}.chip.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}.chip.info{background:var(--info-soft);color:var(--info);border-color:transparent}.chip.accent{background:var(--accent-soft);color:var(--fg);border-color:transparent}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+.shell{display:grid;grid-template-columns:190px 1fr;min-height:calc(100% - 56px)}
+.rail{border-right:1px solid var(--line);background:var(--surface);padding:14px 10px;display:flex;flex-direction:column;gap:4px;position:sticky;top:calc(56px + env(safe-area-inset-top,0px));align-self:start;height:calc(100vh - 56px - env(safe-area-inset-top,0px))}
+.rail a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;color:var(--fg);font-size:15px}
+.rail a[aria-current="page"]{background:var(--accent-soft)}
+.rail a svg{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rail .sub{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px}
+.rail .sub a{font-size:13px;font-weight:500;padding:7px 10px}
+.rail .spacer{flex:1}.rail .foot{font-size:11px;color:var(--muted);padding:8px 10px;line-height:1.4}
+main{padding-block:18px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
+.view{display:none;max-width:1240px;margin:0 auto;flex-direction:column;gap:16px}.view.active{display:flex}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.head .sub{color:var(--muted);margin-top:4px;max-width:72ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;text-decoration:none;color:inherit}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}.btn.ink{background:var(--ink);color:var(--on-ink);border-color:transparent}.btn.ghost{background:transparent}.btn.sm{padding:5px 10px;font-size:12px}.btn.big{padding:16px;font-size:16px;justify-content:flex-start;width:100%}.btn.ok{background:var(--ok);color:#fff;border-color:transparent}.btn.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}.card.soft{background:var(--surface-2);border-color:transparent}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kpi .v{font-family:var(--display);font-size:32px;font-weight:800;line-height:1;margin:6px 0 4px}.kpi .d{font-size:12px;color:var(--muted)}.kpi .d b{color:var(--fg)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.stack{display:flex;flex-direction:column;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:8px;border-bottom:1px solid var(--line)}td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}td.num,th.num{text-align:right;white-space:nowrap}tr:last-child td{border-bottom:0}.tbl{overflow-x:auto}
+.list{display:flex;flex-direction:column}.list>div{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}.list>div:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:5px}.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}.dot.info{background:var(--info)}
+.tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);display:inline-block}
+.vz{font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--surface-2);color:var(--muted);vertical-align:middle;letter-spacing:.04em}.vz.ok{background:var(--ok-soft);color:var(--ok)}.vz.chk{background:var(--warn-soft);color:var(--warn)}.vz.inf{background:var(--info-soft);color:var(--info)}
+.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{background:var(--surface-2);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column;gap:8px;min-height:160px}
+.col h4{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 6px}.col h4 span{font-family:var(--body);background:var(--surface);border-radius:999px;padding:1px 8px;font-size:11px;letter-spacing:0}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;border-left:4px solid var(--line)}.kcard.hot{border-left-color:var(--bad)}.kcard.warm{border-left-color:var(--warn)}.kcard.cool{border-left-color:var(--ok)}
+.kcard .t{font-weight:600}.kcard .m{font-size:12px;color:var(--muted);margin-top:2px}.kcard .amt{font-family:var(--display);font-size:20px;font-weight:700;margin-top:6px}.kcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:6px;flex-wrap:wrap}
+.steps{display:flex;gap:4px;flex-wrap:wrap}.steps button{flex:1;min-width:110px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;text-align:left;cursor:pointer;display:flex;gap:8px;align-items:center}
+.steps button .n{width:22px;height:22px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.steps button[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft)}.steps button[aria-current="step"] .n{background:var(--accent);color:var(--on-accent)}.steps button.done .n{background:var(--ok);color:#fff}
+.step{display:none;flex-direction:column;gap:14px}.step.active{display:flex}
+.form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.form .full{grid-column:1/-1}
+.wiz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:14px;align-items:start}.summary{position:sticky;top:calc(70px + env(safe-area-inset-top,0px))}
+.calc{display:grid;grid-template-columns:1fr auto;gap:4px 14px;font-size:13px}.calc .num{text-align:right}.calc .tot{font-weight:700;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
+.sat{position:relative;background:#3b4a3a;border-radius:8px;aspect-ratio:16/9;max-width:100%;overflow:hidden}.sat svg{width:100%;height:100%;display:block}.sat .ov{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}.sat .ov .chip{background:rgba(20,20,20,.75);color:#fff;border-color:transparent}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}.ph{aspect-ratio:4/3;border-radius:8px;position:relative;overflow:hidden;background:var(--surface-2);display:flex;align-items:flex-end;font-size:11px}.ph img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.ph .lbl{position:relative;padding:6px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;width:100%}.ph.add{border:2px dashed var(--line);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--muted);text-align:center;padding:8px}
+.finding{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}.sev{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:5px;margin-top:2px}.sev.c{background:var(--bad-soft);color:var(--bad)}.sev.a{background:var(--warn-soft);color:var(--warn)}.sev.m{background:var(--info-soft);color:var(--info)}
+.option{border:2px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface);cursor:pointer;position:relative}.option.selected{border-color:var(--accent)}
+.option .reco{position:absolute;top:-10px;left:12px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase}.option .reco.alt{background:var(--surface-2);color:var(--muted)}
+.option .price{font-family:var(--display);font-size:32px;font-weight:800;line-height:1}.option .price s{font-size:17px;color:var(--muted);font-weight:600;margin-right:6px}.option .price small{font-family:var(--body);font-size:12px;font-weight:500;color:var(--muted)}
+.option dl{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin:0;font-size:13px}.option dt{color:var(--muted)}.option dd{margin:0;text-align:right;font-weight:600}
+.meter{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;position:relative}.meter i{display:block;height:100%;border-radius:999px}.meter .floor{position:absolute;top:-3px;width:2px;height:14px;background:var(--fg)}
+.semaforo{display:inline-flex;align-items:center;gap:6px;font-weight:700}.semaforo::before{content:"";width:12px;height:12px;border-radius:50%;background:currentColor}.semaforo.ok{color:var(--ok)}.semaforo.warn{color:var(--warn)}.semaforo.bad{color:var(--bad)}
+.check{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.check:last-child{border-bottom:0}.ic{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none;color:#fff}.ic.ok{background:var(--ok)}.ic.warn{background:var(--warn)}.ic.bad{background:var(--bad)}
+.phone{width:min(380px,100%);margin:0 auto;border:10px solid #1a1a1d;border-radius:34px;background:var(--surface);overflow:hidden;box-shadow:var(--shadow)}.phone .scr{padding:14px;display:flex;flex-direction:column;gap:12px;max-height:720px;overflow:auto}.phone .hdr{background:var(--ink);color:var(--on-ink);margin:-14px -14px 0;padding:16px 14px 14px}.phone .hdr .eyebrow{color:inherit;opacity:.75}
+.propopt{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}.propopt.pick{border-color:var(--accent);background:var(--accent-soft)}
+.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px}.timeline div{background:var(--surface-2);border-radius:6px;padding:6px}.timeline b{display:block;font-size:12px}
+.qr{width:60px;height:60px;background:repeating-linear-gradient(90deg,var(--fg) 0 6px,transparent 6px 12px),repeating-linear-gradient(0deg,var(--fg) 0 6px,transparent 6px 12px);opacity:.8;border-radius:4px;flex:none}
+.wa{display:flex;flex-direction:column;gap:6px;background:var(--surface-2);padding:12px;border-radius:10px;font-size:13px}.wa .b{max-width:85%;padding:7px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}.wa .b.me{align-self:flex-end;background:var(--ok-soft);border-color:transparent}.wa .b small{display:block;font-size:10px;color:var(--muted);margin-top:2px;text-align:right}
+.score{font-family:var(--display);font-size:22px;font-weight:800;width:44px;text-align:center;border-radius:8px;padding:4px 0;flex:none}.score.hi{background:var(--ok-soft);color:var(--ok)}.score.mid{background:var(--warn-soft);color:var(--warn)}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px}.wk div{border-radius:6px;padding:6px 2px;background:var(--surface-2)}.wk div b{display:block;font-size:14px}.wk .r{background:var(--bad-soft);color:var(--bad)}.wk .g{background:var(--ok-soft);color:var(--ok)}.wk .y{background:var(--warn-soft);color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:10px 16px;border-radius:999px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}.toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:25;align-items:center;justify-content:center;padding:16px}.modal.open{display:flex}.modal .box{background:var(--surface);border-radius:14px;padding:20px;width:min(560px,100%);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.fase{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.fase.done{background:var(--ok-soft);border-color:transparent}.fase .n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-weight:700;flex:none}.fase.done .n{background:var(--ok);color:#fff}.fase .t{flex:1;min-width:0}.fase .t b{display:block}.fase .t span{font-size:12px;color:var(--muted)}
+.docrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.docrow:last-child{border-bottom:0}.src{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}.src.sat{background:var(--info-soft);color:var(--info)}.src.mail{background:var(--accent-soft);color:var(--fg)}.src.foto{background:var(--warn-soft);color:var(--warn)}.src.banco{background:var(--ok-soft);color:var(--ok)}
+.sig{border:1px dashed var(--line);border-radius:8px;background:var(--surface);width:100%;height:110px;touch-action:none;display:block}
+.bars{display:flex;align-items:flex-end;gap:6px;height:80px}.bars div{flex:1;background:var(--accent);border-radius:4px 4px 0 0;position:relative;min-width:0}.bars div span{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)}
+.print{display:none}.split{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}.docrow>div:nth-child(2){min-width:0}
+@media (max-width:900px){.shell{grid-template-columns:1fr}.rail{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));gap:2px;z-index:9}.rail a{flex-direction:column;gap:3px;font-size:11px;padding:6px 4px;flex:1;text-align:center}.rail .sub,.rail .spacer,.rail .foot{display:none}.rail a.more{display:flex}.g2,.g3,.g4,.g5{grid-template-columns:1fr 1fr}.wiz{grid-template-columns:1fr}.summary{position:static}.brand .name small{display:none}.cmd{order:5;flex-basis:100%}.topr .hide-m{display:none}.split{grid-template-columns:1fr}.docrow{grid-template-columns:auto 1fr}.docrow>div:last-child{grid-column:1/-1;flex-direction:row!important}}
+@media (min-width:901px){.rail a.more{display:none}}
+@media (max-width:520px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}.steps button{min-width:46%}.kpi .v{font-size:26px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<header class="top">
+  <div class="brand"><div class="mark" id="brandMark">I</div><div class="name" id="brandName">PROSEAL OS<small>v0.2 · FUSIÓN</small></div></div>
+  <div class="cmd"><input id="cmd" placeholder='Escribe o dicta: "cotiza 300 m2 acrílico 10 para OXXO Hidalgo" · "cuánto debe LALA" · "agenda visita viernes 9"' onkeydown="if(event.key==='Enter')runCmd()"><button title="Dictar" onclick="voiceCmd()">🎙</button></div>
+  <div class="topr">
+    <div class="seg" role="group" aria-label="Marca"><button id="tnImp" aria-pressed="true" onclick="setTenant('impertodo')">Impertodo</button><button id="tnPro" aria-pressed="false" onclick="setTenant('proseal')">ProSealMaster</button></div>
+    <div class="seg" role="group" aria-label="Rol"><button id="rAdmin" aria-pressed="true" onclick="setRole('admin')">Admin</button><button id="rSup" aria-pressed="false" onclick="setRole('sup')">Supervisor</button><button id="rGer" aria-pressed="false" onclick="setRole('ger')">Gerencia</button></div>
+    <button class="btn sm ghost hide-m" onclick="resetDemo()">↺ Demo</button>
+  </div>
+</header>
+<div class="shell">
+<nav class="rail" aria-label="Secciones">
+  <a href="#hoy" data-v="hoy"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Hoy</a>
+  <a href="#cotizar" data-v="cotizar"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></svg>Cotizar</a>
+  <a href="#obra" data-v="obra"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>Obra</a>
+  <a href="#mas" data-v="mas" class="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Más</a>
+  <div class="sub">
+    <a href="#clientes" data-v="clientes">Clientes</a><a href="#cotizaciones" data-v="cotizaciones">Cotizaciones</a><a href="#gastos" data-v="gastos">Gastos</a><a href="#cobrar" data-v="cobrar">Cobrar</a><a href="#inventario" data-v="inventario">Inventario</a><a href="#captacion" data-v="captacion">Captación</a><a href="#propuesta" data-v="propuesta">Propuesta viva</a><a href="#catalogo" data-v="catalogo">Catálogo</a><a href="#central" data-v="central">Central (red)</a>
+  </div>
+  <div class="spacer"></div><div class="foot">Prototipo v0.2 · datos de ejemplo salvo [DATO JAMES] · se guarda en este navegador</div>
+</nav>
+<main>
+
+<!-- MÁS (solo móvil) -->
+<section class="view" id="v-mas"><div class="head"><div><h1>Más</h1></div></div>
+<div class="grid g2" id="masGrid"></div></section>
+
+<!-- HOY -->
+<section class="view" id="v-hoy">
+  <div class="head"><div><div class="eyebrow" id="hoyDate"></div><h1 id="hoyTitle">Hoy</h1><p class="sub" id="hoySub"></p></div><div class="actions" id="hoyActions"></div></div>
+  <div class="grid g5" id="hoyKpis"></div>
+  <div class="grid g3">
+    <div class="card" style="grid-column:span 2"><div class="row between"><h3>Atender hoy</h3><span class="tag" id="hoyCount"></span></div><div class="list" id="hoyList" style="margin-top:8px"></div></div>
+    <div class="stack">
+      <div class="card"><h3>Ventana de aplicación · Torreón</h3><p class="small muted" style="margin:4px 0 10px">Agenda y argumento de urgencia. Open-Meteo <span class="vz chk">VERIFICAR</span></p><div class="wk"><div class="g">V<b>31°</b>seco</div><div class="g">S<b>30°</b>seco</div><div class="y">D<b>27°</b>40%</div><div class="r">L<b>24°</b>80%</div><div class="r">M<b>23°</b>70%</div><div class="g">X<b>28°</b>seco</div><div class="g">J<b>30°</b>seco</div></div></div>
+      <div class="card" id="hoySide"></div>
+    </div>
+  </div>
+</section>
+
+<!-- COTIZAR -->
+<section class="view" id="v-cotizar">
+  <div class="head"><div><div class="eyebrow" id="qFolio">Cotizador · nuevo folio</div><h1>Cotizar</h1><p class="sub">Levantamiento → diagnóstico → dos opciones → precio con margen → propuesta. El resumen de la derecha se actualiza con cada campo.</p></div>
+  <div class="actions"><button class="btn ghost" onclick="newQuote()">Nueva</button><button class="btn" onclick="saveQuote()">Guardar</button><button class="btn primary" onclick="saveQuote(true)">Guardar y enviar →</button></div></div>
+  <div class="steps" id="steps"><button onclick="goStep(1)" data-s="1"><span class="n">1</span>Cliente</button><button onclick="goStep(2)" data-s="2"><span class="n">2</span>Levantamiento</button><button onclick="goStep(3)" data-s="3"><span class="n">3</span>Diagnóstico</button><button onclick="goStep(4)" data-s="4"><span class="n">4</span>Opciones</button><button onclick="goStep(5)" data-s="5"><span class="n">5</span>Precio y envío</button></div>
+  <div class="wiz">
+   <div class="stack">
+    <div class="step" id="s1"><div class="card"><div class="row between"><h3>Cliente y obra</h3><select id="cLead" onchange="loadLead()" style="max-width:280px"></select></div>
+      <div class="form" style="margin-top:12px">
+        <div><label for="cCliente">Empresa / cliente</label><input id="cCliente" oninput="calc()"></div><div><label for="cAt">Atención</label><input id="cAt"></div><div><label for="cWa">WhatsApp</label><input id="cWa"></div>
+        <div><label for="cSector">Sector</label><select id="cSector" onchange="calc()"><option>Gobierno / Salud</option><option>Industrial</option><option>Comercial</option><option>Residencial</option><option>Minero</option></select></div>
+        <div class="full"><label for="cObra">Obra / dirección</label><input id="cObra"></div>
+        <div><label for="cElem">Elemento</label><select id="cElem"><option>Losa de azotea no transitable</option><option>Losa transitable</option><option>Nave / lámina</option><option>Cisterna</option><option>Muro / cimentación</option><option>Piso industrial</option></select></div>
+        <div><label for="cFuente">Fuente</label><select id="cFuente"><option>Referido</option><option>WhatsApp</option><option>Estimador web</option><option>Licitación</option><option>Radar de techos</option></select></div>
+        <div><label for="cFact">Factura</label><select id="cFact" onchange="calc()"><option value="si">Sí (CFDI 4.0, +IVA)</option><option value="no">No requiere (precio neto)</option></select></div>
+        <div><label for="cAcceso">Acceso / altura</label><select id="cAcceso" onchange="calc()"><option value="1">Normal</option><option value="1.15">Complejo (+15% destajo)</option><option value="1.3">Altura / maniobras (+30%)</option></select></div>
+        <div><label for="cMov">Movilización / viáticos ($)</label><input id="cMov" type="number" value="0" oninput="calc()"></div>
+      </div></div>
+      <div class="row between"><span></span><button class="btn primary" onclick="goStep(2)">Levantamiento →</button></div></div>
+
+    <div class="step" id="s2"><div class="grid g2">
+      <div class="card"><div class="row between"><h3>Levantamiento</h3><div class="seg"><button aria-pressed="true" onclick="toast('Satélite: medición asistida sobre imagen')">Satélite</button><button aria-pressed="false" onclick="toast('Dron: subir ortofoto')">Dron</button><button aria-pressed="false" onclick="toast('Plano: subir PDF/DWG')">Plano</button></div></div>
+        <div class="sat" style="margin-top:10px"><svg viewBox="0 0 640 360"><rect width="640" height="360" fill="#4a5a47"/><g fill="#6f7a6a"><rect x="20" y="30" width="180" height="110"/><rect x="430" y="40" width="190" height="80"/><rect x="40" y="240" width="140" height="100"/><rect x="470" y="230" width="150" height="110"/></g><g fill="#8a8f86"><rect x="0" y="175" width="640" height="24"/><rect x="230" y="0" width="22" height="360"/></g><path d="M270 55 h330 v110 h-120 v55 h-210 z" fill="#b9b4a6"/><path d="M270 55 h330 v110 h-120 v55 h-210 z" fill="none" stroke="#F4B81E" stroke-width="4" stroke-dasharray="10 6"/><g fill="#2b2b2b"><circle cx="300" cy="85" r="5"/><circle cx="570" cy="85" r="5"/><circle cx="300" cy="200" r="5"/><circle cx="460" cy="200" r="5"/><rect x="380" y="95" width="40" height="40" rx="4"/></g><ellipse cx="560" cy="140" rx="40" ry="16" fill="#5b6cff" opacity=".35"/><text x="282" y="47" fill="#fff" font-size="13" font-family="sans-serif">Losa principal (satélite)</text></svg><div class="ov"><span class="chip">Planta detectada ≈ 1,290 m²</span><span class="chip">4 bajantes · 1 domo</span></div></div>
+        <p class="small muted" style="margin-top:8px">Pre-cotiza sin visita; la propuesta lleva "a reserva de verificar área" hasta confirmar en sitio.</p></div>
+      <div class="card"><div class="row between"><h3>Medidas</h3><button class="btn sm" onclick="dictar()">🎙 Dictar</button></div><p class="small muted" id="dictado" style="margin:6px 0 10px">Ej.: "losa 1,314, pretil 40 cm todo el perímetro, 4 bajantes, un domo, ducto de 6 m"</p>
+        <div class="form">
+          <div><label for="mPlanta">Área en planta (m²)</label><input id="mPlanta" type="number" value="1314.18" oninput="calc()"></div><div><label for="mPer">Perímetro pretil (m)</label><input id="mPer" type="number" value="150" oninput="calc()"></div><div><label for="mAlt">Altura pretil (m)</label><input id="mAlt" type="number" step="0.05" value="0.40" oninput="calc()"></div><div><label for="mBaj">Bajantes</label><input id="mBaj" type="number" value="4" oninput="calc()"></div><div><label for="mDom">Domos / registros</label><input id="mDom" type="number" value="1" oninput="calc()"></div><div><label for="mDuc">Perímetro ductos (m)</label><input id="mDuc" type="number" value="6" oninput="calc()"></div>
+          <div><label for="mVer">Área verificada en sitio</label><select id="mVer" onchange="calc()"><option value="no">No, pre-cotización</option><option value="si">Sí, medida física</option></select></div><div><label for="mPend">Pendiente / drenaje</label><select id="mPend" onchange="calc()"><option value="charcos">Encharca (corregir)</option><option value="ok">Drena bien (≥2%)</option></select></div>
+        </div>
+        <div class="card soft" style="margin-top:12px"><div class="eyebrow" style="margin-bottom:6px">Área desarrollada</div><div class="calc" id="calcOut"></div></div></div>
+    </div><div class="row between"><button class="btn ghost" onclick="goStep(1)">← Atrás</button><button class="btn primary" onclick="goStep(3)">Diagnóstico →</button></div></div>
+
+    <div class="step" id="s3"><div class="grid g2">
+      <div class="card"><div class="row between"><h3>Fotos</h3><span class="chip" id="phCount">5 fotos</span></div>
+        <div class="photos" style="margin-top:10px" id="photos"><div class="ph" style="background:linear-gradient(160deg,#7d8a7a,#4e5a4b)"><span class="lbl">Vista NE · charco</span></div><div class="ph" style="background:linear-gradient(160deg,#9c8f7a,#6b5f4c)"><span class="lbl">Pretil sur · fisura</span></div><div class="ph" style="background:linear-gradient(160deg,#b7b0a1,#857f71)"><span class="lbl">Acrílico ampollado</span></div><div class="ph" style="background:linear-gradient(160deg,#6c7f93,#3f4d5c)"><span class="lbl">Bajante 2</span></div><div class="ph" style="background:linear-gradient(160deg,#8e8e8e,#5a5a5a)"><span class="lbl">Domo</span></div><label class="ph add" for="fotoIn">+ Fotos<input id="fotoIn" type="file" accept="image/*" multiple hidden onchange="addPhotos(this,'photos')"></label></div>
+        <div class="row" style="margin-top:12px"><button class="btn primary" onclick="analizar()">Analizar con IA</button><span class="small muted">Si tarda, puedes seguir: el diagnóstico llega solo.</span></div></div>
+      <div class="card"><div class="row between"><h3>Diagnóstico</h3><span class="chip info" id="diagState">Pendiente</span></div><div class="stack" style="margin-top:10px" id="diag"><p class="muted small">Pulsa "Analizar con IA". Define sistema, partidas previas y condiciones de garantía. Nunca bloquea: puedes cotizar sin él.</p></div></div>
+    </div><div class="row between"><button class="btn ghost" onclick="goStep(2)">← Atrás</button><button class="btn primary" onclick="goStep(4)">Opciones →</button></div></div>
+
+    <div class="step" id="s4"><div class="row between"><div><h3>Dos opciones: lo que pide y lo que necesita</h3><p class="small muted">Se presentan ambas con costo por m² por año.</p></div><button class="btn" onclick="recomendar()">✦ Recomendar con IA</button></div>
+      <div class="grid g2" id="options"></div>
+      <div class="card"><h4>Partidas previas (del diagnóstico y levantamiento)</h4><div class="tbl" style="margin-top:6px"><table id="extras"></table></div><button class="btn sm" style="margin-top:8px" onclick="addExtra()">+ Partida</button></div>
+      <div class="row between"><button class="btn ghost" onclick="goStep(3)">← Atrás</button><button class="btn primary" onclick="goStep(5)">Precio y envío →</button></div></div>
+
+    <div class="step" id="s5"><div class="card"><div class="row between"><div><div class="eyebrow">Cotización · opción seleccionada</div><h3 id="apuTitle">—</h3></div><div class="row"><label style="margin:0" for="qPromo">Precio</label><select id="qPromo" onchange="calc()" style="width:auto"><option value="promo">Promoción</option><option value="list">Lista</option></select><span class="chip" id="qVig"></span></div></div>
+        <div class="tbl" style="margin-top:10px"><table id="apu"></table></div><p class="small muted" style="margin-top:8px">Procedimiento impreso en la propuesta: <span id="proc"></span></p></div>
+      <div class="card"><div class="row between"><h3>Validador anti-error</h3><span class="chip" id="valSummary"></span></div><div id="checks" style="margin-top:6px"></div></div>
+      <div class="card"><h3>Entregar</h3><div class="grid g2" style="margin-top:10px"><a class="btn primary" href="#propuesta">Propuesta viva (celular) →</a><button class="btn" onclick="printQuote()">Vista PDF · plantilla Impertodo</button><button class="btn" onclick="saveQuote(true)">Enviar por WhatsApp</button><button class="btn" onclick="toast('Presupuesto creado en Odoo (S00143)')">Crear en Odoo</button></div><p class="small muted" style="margin-top:8px">Al aprobar el cliente: OT, lista de materiales con merma, pedido a almacén y calendario de garantía se generan solos.</p></div>
+      <div class="row between"><button class="btn ghost" onclick="goStep(4)">← Atrás</button><span></span></div></div>
+   </div>
+   <div class="summary"><div class="card"><div class="row between"><h3>Resumen en vivo</h3><span class="chip" id="sumState">Borrador</span></div><div class="calc" id="summary" style="margin-top:10px"></div><div id="margen" style="margin-top:12px"></div></div></div>
+  </div>
+</section>
+<!-- OBRA -->
+<section class="view" id="v-obra">
+  <div class="head"><div><div class="eyebrow">Ejecución</div><h1>Obra</h1><p class="sub">Regla de 60 segundos: foto + fase + m² y listo. Funciona sin señal y sincroniza después. La OT nace sola al aprobar una cotización.</p></div><div class="actions"><select id="otSel" onchange="renderObra()" style="width:auto"></select></div></div>
+  <div class="grid split">
+    <div class="stack">
+      <div class="card"><div class="row between"><div><div class="eyebrow" id="otId"></div><h3 id="otTitle"></h3><p class="small muted" id="otMeta"></p></div><span class="chip" id="otState"></span></div>
+        <div class="grid g2" style="margin-top:12px" id="otBig"></div></div>
+      <div class="card"><div class="row between"><h3>Fases</h3><span class="chip" id="otProg"></span></div><div class="stack" style="margin-top:10px" id="fases"></div></div>
+      <div class="card"><h3>Entrega</h3><p class="small muted" style="margin:4px 0 8px">Firma del cliente en pantalla. Genera garantía digital y factura.</p><canvas class="sig" id="sig" width="600" height="110"></canvas><div class="row" style="margin-top:8px"><button class="btn sm" onclick="clearSig()">Borrar</button><button class="btn ok" onclick="entregar()">Entregar y generar garantía</button></div></div>
+    </div>
+    <div class="stack">
+      <div class="card"><div class="row between"><h3>Material teórico vs real</h3><span class="chip" id="mermaChip"></span></div><div class="tbl" style="margin-top:8px"><table id="consumo"></table></div></div>
+      <div class="card"><div class="row between"><h3>Calidad IA</h3><span class="chip info">revisa cada foto</span></div><div class="list" id="qa" style="margin-top:6px"></div></div>
+      <div class="card"><h3>Clima en obra</h3><div class="wk" style="margin-top:8px"><div class="g">V<b>31°</b>seco</div><div class="g">S<b>30°</b>seco</div><div class="y">D<b>27°</b>40%</div><div class="r">L<b>24°</b>80%</div><div class="r">M<b>23°</b>70%</div><div class="g">X<b>28°</b>seco</div><div class="g">J<b>30°</b>seco</div></div><p class="small muted" style="margin-top:6px">Lunes–martes sin aplicación: el agente propone reprogramar y avisa al cliente.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENTES -->
+<section class="view" id="v-clientes">
+  <div class="head"><div><div class="eyebrow">Cuentas y activos</div><h1>Clientes</h1><p class="sub">Cada techo es un activo con historial, garantía y próxima renovación.</p></div><div class="actions"><input id="qLead" placeholder="Buscar cliente, obra, contacto…" style="max-width:240px" oninput="renderKanban()"><button class="btn primary" onclick="openModal()">+ Prospecto</button></div></div>
+  <div class="kanban" id="kanban"></div>
+  <div class="card"><div class="row between"><h3>Cuentas</h3><span class="tag">activos y garantías</span></div><div class="tbl" style="margin-top:8px"><table id="cuentas"></table></div></div>
+</section>
+
+<!-- COTIZACIONES -->
+<section class="view" id="v-cotizaciones">
+  <div class="head"><div><div class="eyebrow">Historial</div><h1>Cotizaciones</h1><p class="sub">Folio, estado, vigencia y acción. Las vencidas y sin respuesta suben a Hoy.</p></div><div class="actions"><a class="btn primary" href="#cotizar" onclick="newQuote()">+ Nueva</a></div></div>
+  <div class="card"><div class="tbl"><table id="quotesTbl"></table></div></div>
+</section>
+
+<!-- GASTOS -->
+<section class="view" id="v-gastos">
+  <div class="head"><div><div class="eyebrow">Contabilidad sin capturar</div><h1>Gastos y facturas</h1><p class="sub">La bandeja se llena sola: SAT (todo lo emitido y recibido con la e.firma), correo facturas@, foto de tickets y banco. La IA clasifica y asigna a la obra; tú apruebas.</p></div>
+  <div class="actions"><label class="btn" for="ticketIn">📷 Foto de ticket<input id="ticketIn" type="file" accept="image/*" hidden onchange="ticketPhoto(this)"></label><button class="btn" onclick="simSat()">⟳ Descargar SAT hoy</button><button class="btn primary" onclick="approveAll()">Aprobar todo lo verde</button></div></div>
+  <div class="grid g4" id="gastosKpis"></div>
+  <div class="card"><div class="row between"><h3>Bandeja</h3><div class="seg"><button aria-pressed="true" onclick="docFilter='pend';renderDocs()">Pendientes</button><button aria-pressed="false" onclick="docFilter='ok';renderDocs()">Aprobados</button><button aria-pressed="false" onclick="docFilter='all';renderDocs()">Todos</button></div></div><div id="docs" style="margin-top:6px"></div></div>
+  <p class="small muted">XML CFDI se parsea (sin OCR). Fotos de ticket: IA extrae proveedor, fecha, total, IVA y propone obra por GPS/fecha. La IA nunca contabiliza ni paga sola. Descarga masiva con <span class="mono">python-satcfdi</span> (MIT) <span class="vz ok">VERIFICADO</span>.</p>
+</section>
+
+<!-- COBRAR -->
+<section class="view" id="v-cobrar">
+  <div class="head"><div><div class="eyebrow">Caja</div><h1>Cobrar</h1><p class="sub">Quién debe, desde cuándo y un botón para recordar. Abajo, utilidad real por obra contra la cotizada.</p></div></div>
+  <div class="grid g4" id="cobrarKpis"></div>
+  <div class="grid g2">
+    <div class="card"><h3>Facturas por cobrar</h3><div class="tbl" style="margin-top:8px"><table id="cxc"></table></div></div>
+    <div class="card"><h3>Utilidad real por obra</h3><div class="tbl" style="margin-top:8px"><table id="pnl"></table></div><p class="small muted" style="margin-top:6px">Real = vendido − material real − destajo − gastos de obra. Cotizado = margen del semáforo al vender.</p></div>
+  </div>
+</section>
+
+<!-- INVENTARIO -->
+<section class="view" id="v-inventario">
+  <div class="head"><div><div class="eyebrow">Almacén</div><h1>Inventario</h1><p class="sub">Descuenta por OT. Mínimos y pedido propuesto por el agente de compras. Proveedor activo define el costo del cotizador.</p></div><div class="actions"><button class="btn primary" onclick="toast('Orden de compra propuesta creada en Odoo')">Crear pedido propuesto</button></div></div>
+  <div class="card"><div class="tbl"><table id="inv"></table></div></div>
+</section>
+
+<!-- CAPTACIÓN -->
+<section class="view" id="v-captacion">
+  <div class="head"><div><div class="eyebrow">Entradas al embudo</div><h1>Captación</h1><p class="sub">Estimador público en impertodopro.com, WhatsApp con IA y radar de techos para cuentas grandes.</p></div></div>
+  <div class="grid g3">
+    <div class="card"><div class="row between"><h3>Estimador web</h3><span class="chip">impertodopro.com/cotiza</span></div><div class="form" style="margin-top:10px"><div><label for="ieTipo">¿Qué quieres impermeabilizar?</label><select id="ieTipo"><option>Azotea de casa</option><option>Azotea comercial / oficina</option><option>Nave industrial</option><option>Cisterna</option></select></div><div><label for="ieM2">m² aprox.</label><input id="ieM2" type="number" value="250"></div><div class="full"><label for="ieWa">WhatsApp</label><input id="ieWa" placeholder="10 dígitos"></div></div><button class="btn primary" style="margin-top:10px;width:100%" onclick="estimar()">Ver mi estimado</button><div id="ieOut" class="card soft" style="margin-top:10px;display:none"></div></div>
+    <div class="card"><div class="row between"><h3>WhatsApp con IA</h3><span class="chip ok">API Meta</span></div><div class="wa" style="margin-top:10px"><div class="b">Tengo goteras en la azotea de mi local, ¿cuánto cobran el metro?<small>9:12</small></div><div class="b me">Hola 👋 Para darte precio real necesito: ① m² aprox. ② qué tiene ahora ③ 2–3 fotos.<small>9:12</small></div><div class="b">180 m², acrílico rojo viejo. [3 fotos]<small>9:15</small></div><div class="b me">Veo acrílico despegado y un charco junto al bajante. Rango: acrílico 10 años $169–199/m² o rollo SBS 10 años de garantía $329–390/m² (+IVA con factura). ¿Visita sin costo viernes 9:00 o 16:00?<small>9:15</small></div><div class="b">Viernes 9<small>9:17</small></div><div class="b me">Listo ✅ viernes 24-oct 9:00. Propuesta el mismo día.<small>9:17</small></div></div><p class="small muted" style="margin-top:8px">→ Prospecto creado · etapa Levantamiento · fuente WhatsApp</p></div>
+    <div class="card"><div class="row between"><h3>Radar de techos</h3><span class="chip">DENUE + satélite</span></div><div class="list" style="margin-top:8px"><div><span class="score hi">94</span><div><b>Nave logística · Parque Industrial Lagunero</b><br><span class="small muted">≈ 6,800 m² · lámina con óxido · gerente de mantto en LinkedIn</span></div></div><div><span class="score hi">88</span><div><b>Plaza comercial · Blvd. Independencia</b><br><span class="small muted">≈ 3,200 m² · charcos en imagen de agosto</span></div></div><div><span class="score mid">76</span><div><b>Secundaria técnica SEP</b><br><span class="small muted">≈ 2,100 m² · licitación probable 2027</span></div></div></div><button class="btn" style="margin-top:10px;width:100%" onclick="toast('Secuencia de 3 toques creada')">Iniciar secuencia</button></div>
+  </div>
+  <div class="card"><div class="row between"><h3>Licitaciones detectadas</h3><span class="chip">CompraNet + estados</span></div><div class="tbl" style="margin-top:8px"><table><tr><th>Convocante</th><th>Objeto</th><th>Apertura</th><th class="num">Coincidencia</th><th></th></tr><tr><td>IMSS · OOAD Coahuila</td><td>Mantenimiento de impermeabilización HGZ 16 y UMF 79</td><td>29-oct</td><td class="num"><b>92%</b></td><td><button class="btn sm" onclick="toast('Expediente pre-llenado')">Pre-llenar</button></td></tr><tr><td>Coahuila · SEDU</td><td>Techumbres en 6 planteles, Región Laguna</td><td>4-nov</td><td class="num"><b>85%</b></td><td><button class="btn sm">Pre-llenar</button></td></tr><tr><td>Municipio de Torreón</td><td>Impermeabilización mercado Alianza</td><td>7-nov</td><td class="num"><b>80%</b></td><td><button class="btn sm">Pre-llenar</button></td></tr></table></div><p class="example" style="margin-top:6px">Registros de ejemplo.</p></div>
+</section>
+
+<!-- PROPUESTA VIVA -->
+<section class="view" id="v-propuesta">
+  <div class="head"><div><div class="eyebrow">Vista del cliente · enlace</div><h1>Propuesta viva</h1><p class="sub">Se abre desde WhatsApp. Fotos propias anotadas, dos opciones, elegir, firmar y pagar anticipo. Cada apertura se registra.</p></div><div class="actions"><button class="btn" onclick="copyLink()">Copiar enlace</button><button class="btn primary" onclick="toast('Enviado por WhatsApp')">Enviar</button></div></div>
+  <div class="grid g2">
+    <div class="phone"><div class="scr" id="propScr"></div></div>
+    <div class="stack"><div class="card"><h3>Lo que ve Impertodo</h3><div class="list" style="margin-top:6px"><div><span class="dot ok"></span><div>Abierta 3 veces · 4 min en la opción recomendada</div></div><div><span class="dot info"></span><div>Pregunta por chat: "¿incluye retirar lo anterior?" → la IA respondió con la partida y avisó al supervisor</div></div><div><span class="dot warn"></span><div>Reenviada a otro número (dirección). Probabilidad 50% → 68%</div></div></div></div>
+    <div class="card"><h4>Mantiene el formato actual</h4><p class="small" style="margin-top:6px">Partida única, procedimiento numerado, lista → promoción, garantía por escrito, 60/40 ó 70/30, vigencia 30 días, "a reserva de verificar área", IVA desglosado. <span class="vz ok">DATO JAMES</span></p></div></div>
+  </div>
+</section>
+
+<!-- CATÁLOGO -->
+<section class="view" id="v-catalogo">
+  <div class="head"><div><div class="eyebrow">Motor de precios</div><h1>Catálogo y márgenes</h1><p class="sub">Aquí vive la verdad: material en unidades reales (cubeta, rollo, saco), destajo, merma, indirectos, piso de margen. Franquiciados heredan precios, no márgenes.</p></div><div class="actions"><button class="btn" onclick="toast('Sincronizado con Odoo')">Sincronizar con Odoo</button><button class="btn primary" onclick="persist();toast('Guardado')">Guardar</button></div></div>
+  <div class="grid g4">
+    <div class="card"><label for="pMargen">Piso de margen bruto (%)</label><input id="pMargen" type="number" value="30" oninput="calc();renderCat()"></div>
+    <div class="card"><label for="pInd">Indirectos (%)</label><input id="pInd" type="number" value="8" oninput="calc();renderCat()"></div>
+    <div class="card"><label for="pProv">Proveedor de material</label><select id="pProv" onchange="calc();renderCat();renderInv()"><option value="nac">Marca nacional</option><option value="psm">PROSEALMASTER (landed −30%)</option></select><p class="small muted" style="margin-top:4px">Simula el producto propio</p></div>
+    <div class="card"><label>Modo de precio</label><div class="row"><span class="chip accent">Lista/promo de catálogo</span></div><p class="small muted" style="margin-top:4px">Precio objetivo desde margen: columna "Mín."</p></div>
+  </div>
+  <div class="card"><div class="tbl"><table id="catTbl"></table></div><p class="small muted" style="margin-top:8px">Precios de venta: cotizaciones reales 2025–2026 <span class="vz ok">DATO JAMES</span>. Costos: supuestos editables <span class="vz chk">VERIFICAR</span>. "Mín." = precio con el piso de margen.</p></div>
+</section>
+
+<!-- CENTRAL -->
+<section class="view" id="v-central">
+  <div class="head"><div><div class="eyebrow">Red (mes 9+)</div><h1>Central</h1><p class="sub">Cada unidad opera su instancia; la central ve ventas timbradas, regalías y pedidos de producto.</p></div></div>
+  <div class="grid g3" id="central"></div>
+  <div class="card"><h4>Reglas</h4><div class="list small" style="margin-top:6px"><div><span class="dot ok"></span><div>Regalía 6% + marketing 2% sobre <b>ventas timbradas</b> (no sobre "ganancias")</div></div><div><span class="dot ok"></span><div>Fee tecnológico $2,500/mes por unidad</div></div><div><span class="dot ok"></span><div>Compra exclusiva PROSEALMASTER; el franquiciado ve precio de compra, no landed</div></div><div><span class="dot warn"></span><div>Franquicia formal solo con COF y marca IMPI (LFPPI 245–250) <span class="vz ok">VERIFICADO</span></div></div></div></div>
+</section>
+
+</main></div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="box"><div class="row between"><h2>Nuevo prospecto</h2><button class="btn sm" onclick="closeModal()">Cerrar</button></div>
+  <div class="form"><div class="full"><label for="nCli">Empresa / cliente</label><input id="nCli" placeholder="Ej. Plaza Independencia"></div><div><label for="nCon">Contacto</label><input id="nCon"></div><div><label for="nWa">WhatsApp</label><input id="nWa"></div><div><label for="nSec">Sector</label><select id="nSec"><option>Comercial</option><option>Industrial</option><option>Gobierno / Salud</option><option>Residencial</option><option>Minero</option></select></div><div><label for="nM2">m² aprox.</label><input id="nM2" type="number" value="300"></div><div class="full"><label for="nObra">Obra</label><input id="nObra"></div><div><label for="nFuente">Fuente</label><select id="nFuente"><option>Referido</option><option>WhatsApp</option><option>Estimador web</option><option>Licitación</option><option>Radar de techos</option></select></div><div><label for="nNext">Siguiente acción</label><input id="nNext" value="Agendar visita"></div></div>
+  <div class="row between"><span class="small muted">20 segundos. Lo demás se llena al cotizar.</span><button class="btn primary" onclick="createLead()">Crear</button></div></div></div>
+<div class="toast" id="toast"></div>
+<div class="print" id="printArea"></div>
+<script>
+/* ===== utilidades ===== */
+const $=id=>document.getElementById(id);
+const FMT=n=>'$'+Math.round(n||0).toLocaleString('es-MX');
+const FMT2=n=>'$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=id=>parseFloat(($(id)||{}).value)||0;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=new Date('2026-10-23T09:00:00');
+const dstr=d=>new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2300)}
+
+/* ===== catálogo: precios de venta [DATO JAMES]; costos [VERIFICAR] =====
+ unit: 'L' (cubeta 19 L), 'm2' (rollo 10 m²), 'kg' (saco/cubeta 20 kg) */
+const SYSTEMS={
+ acr7:{name:'Acrílico fibratado 7 años (Valmex) blanco',short:'Acrílico 7 años',life:7,warranty:5,list:189,promo:169,unit:'L',cons:1.0,pack:19,packPrice:950,labor:30,cons2:4,waste:.10,pago:'60/40',proc:'1) Limpieza de la superficie · 2) Sellador acrílico tapaporos · 3) Sellar grietas y puntos críticos con cemento plástico · 4) 1ª capa acrílico 7 años · 5) Membrana súper reforzada, traslape 10 cm · 6) 2ª capa acrílico 7 años'},
+ acr10:{name:'Acrílico fibratado 10 años (Kánuh) blanco o terracota',short:'Acrílico 10 años',life:10,warranty:5,list:199,promo:169,unit:'L',cons:1.0,pack:19,packPrice:1050,labor:30,cons2:4,waste:.10,pago:'60/40',proc:'1) Limpieza de la superficie · 2) Sellador acrílico tapaporos · 3) Sellar grietas y puntos críticos con cemento plástico · 4) 1ª capa acrílico 10 años · 5) 1 capa de membrana súper reforzada, traslape 10 cm · 6) 2ª capa acrílico 10 años'},
+ sbs45:{name:'Rollo prefabricado SBS 4.5 mm fibra poliéster, gravilla blanca (Chovatek)',short:'Rollo SBS 4.5 mm',life:12,warranty:10,list:390,promo:329,unit:'m2',cons:1.0,pack:10,packPrice:1500,labor:45,cons2:14,waste:.12,pago:'70/30',proc:'1) Limpieza · 2) Primer asfáltico concentrado · 3) Sellado de puntos críticos con cemento plástico asfáltico · 4) Colocación de rollo 4.5 mm por termofusión, traslape 10 cm · 5) Resoldar traslapes · 6) Cemento plástico asfáltico perimetral · 7) Cubrir perímetro con acrílico'},
+ pu:{name:'Poliuretano espreado 3/4"–1" + recubrimiento blanco',short:'Poliuretano espreado',life:8,warranty:2.5,list:240,promo:220,unit:'kg',cons:1.1,pack:20,packPrice:2100,labor:40,cons2:8,waste:.08,pago:'60/40',proc:'1) Limpieza · 2) Poliuretano espreado 3/4"–1" de espesor promedio · 3) Capa de recubrimiento especial color blanco'},
+ polu:{name:'Poliurea por aspersión (industrial / tanques)',short:'Poliurea',life:15,warranty:10,list:690,promo:620,unit:'kg',cons:2.0,pack:20,packPrice:3200,labor:90,cons2:20,waste:.08,pago:'70/30',proc:'1) Preparación mecánica · 2) Primer epóxico · 3) Poliurea 2 mm por aspersión en caliente · 4) Detalles y protección UV'},
+ sil:{name:'Silicona líquida alta reflectancia',short:'Silicona',life:15,warranty:10,list:360,promo:310,unit:'L',cons:1.2,pack:19,packPrice:2600,labor:35,cons2:6,waste:.10,pago:'60/40',proc:'1) Limpieza · 2) Primer de adherencia · 3) Refuerzo en detalles · 4) 2 capas de silicona'},
+ cem:{name:'Cementoso flexible / cristalización (cisternas, muros)',short:'Cementoso',life:10,warranty:5,list:290,promo:260,unit:'kg',cons:3.0,pack:20,packPrice:780,labor:45,cons2:6,waste:.08,pago:'60/40',proc:'1) Preparación y saturación · 2) 1ª capa cementosa · 3) Malla en detalles · 4) 2ª capa · 5) Curado'},
+ ais:{name:'Aislamiento térmico + acrílico reflectivo (NO MÁS CALOR)',short:'Aislamiento térmico',life:10,warranty:5,list:320,promo:290,unit:'L',cons:1.6,pack:19,packPrice:1900,labor:38,cons2:8,waste:.10,pago:'60/40',proc:'1) Limpieza · 2) Sellador · 3) Aislante térmico elastomérico 2 capas · 4) Refuerzo · 5) Acabado reflectivo'},
+ epx:{name:'Piso epóxico industrial 2 mm',short:'Piso epóxico',life:10,warranty:3,list:390,promo:350,unit:'kg',cons:1.2,pack:20,packPrice:3400,labor:60,cons2:15,waste:.08,pago:'60/40',proc:'1) Preparación mecánica (diamantado) · 2) Primer epóxico · 3) Capa base · 4) Capa de acabado'}
+};
+const EXTRAS_DEF=[
+ {id:'ret',c:'Retiro de acrílico ampollado/despegado y disposición',u:'m²',q:197,pu:28,cost:.68,on:false,src:'Diagnóstico: ampollas'},
+ {id:'res',c:'Resane de fisuras en pretil con mortero flexible + refuerzo',u:'ml',q:38,pu:65,cost:.68,on:false,src:'Diagnóstico: fisura pretil'},
+ {id:'pen',c:'Corrección de pendiente zona de encharcamiento (mortero ≈2%)',u:'m²',q:45,pu:120,cost:.68,on:false,src:'Diagnóstico: encharcamiento'},
+ {id:'baj',c:'Refuerzo de bajantes y domo con membrana líquida',u:'pza',q:5,pu:380,cost:.6,on:false,src:'Levantamiento'}
+];
+const DEMO_LEADS=[
+ {id:'L1',cli:'Unidad de Consulta Externa Torreón',at:'Ing. Isaac Díaz',wa:'871 710 1254',sec:'Gobierno / Salud',obra:'Agroindustrias #328 Ote., Parque Industrial Oriente, Torreón',m2:1314.18,stage:2,src:'Referido',next:'Seguimiento: 2 opciones sin respuesta',days:18,amt:'$257k / $501k',k:'hot',real:true},
+ {id:'L2',cli:'LALA · techumbre anexo',at:'Compras',wa:'871 000 1111',sec:'Industrial',obra:'Planta Torreón',m2:2250,stage:3,src:'Referido',next:'OC en trámite',days:9,amt:'$860k',k:'warm'},
+ {id:'L3',cli:'Nave · Parque Industrial Lagunero',at:'Gerente de mantto',wa:'',sec:'Industrial',obra:'Parque Industrial Lagunero',m2:6800,stage:0,src:'Radar de techos',next:'Levantamiento con dron',days:1,amt:'$1.9M est.',k:'cool'},
+ {id:'L4',cli:'Condominio Torre Alta',at:'Administración',wa:'',sec:'Comercial',obra:'Torreón centro',m2:900,stage:1,src:'Referido',next:'Visita 24-oct 9:00',days:3,amt:'$180–300k',k:'warm'},
+ {id:'L5',cli:'IMSS · HGZ No. 16',at:'Conservación',wa:'',sec:'Gobierno / Salud',obra:'Torreón',m2:5800,stage:3,src:'Licitación',next:'Propuesta técnica 29-oct',days:5,amt:'$1.6M',k:'warm'},
+ {id:'L6',cli:'OXXO · 4 sucursales',at:'Mantenimiento zona',wa:'',sec:'Comercial',obra:'Región Laguna',m2:1140,stage:3,src:'Referido',next:'Mantenimiento anual',days:12,amt:'$193k',k:'warm'},
+ {id:'L7',cli:'Local comercial · Centro',at:'Sr. Ramos',wa:'871 555 0101',sec:'Comercial',obra:'Av. Morelos',m2:180,stage:0,src:'WhatsApp',next:'Visita viernes 9:00',days:0,amt:'$35–70k',k:'cool'},
+ {id:'L8',cli:'Edgar Yáñez · PU losa y ductos',at:'Edgar Yáñez',wa:'870 168 9391',sec:'Residencial',obra:'Circuito Santa Isabel #79, Villas de San Ángel',m2:78,stage:4,src:'Referido',next:'Garantía 2.5 años',days:0,amt:'$17,160',k:'cool',real:true}
+];
+const STAGES=['Nuevo','Levantamiento','Cotizado','Negociación','Ganado'];
+const DEMO_QUOTES=[
+ {id:'2026-041',lead:'L1',cli:'Unidad de Consulta Externa Torreón',sys:'acr10',m2:1314.18,sub:222096.42,total:257631.85,state:'Enviada',date:'2026-10-05',real:true},
+ {id:'2026-042',lead:'L1',cli:'Unidad de Consulta Externa Torreón',sys:'sbs45',m2:1314.18,sub:432365.22,total:501543.66,state:'Enviada',date:'2026-10-05',real:true},
+ {id:'2025-118',lead:'L8',cli:'Edgar Yáñez',sys:'pu',m2:78,sub:17160,total:17160,state:'Aprobada',date:'2025-12-18',real:true}
+];
+const DEMO_OTS=[
+ {id:'OT-2026-088',cli:'OXXO · Sucursal Torreón Centro',sys:'acr10',m2:285,sup:'J. Ramírez',crew:3,state:'En obra',start:'2026-10-21',fases:[1,1,1,1,0,0],real:{mat:16,lab:285},teo:{mat:15}},
+ {id:'OT-2026-089',cli:'Altozano · Casa club',sys:'sbs45',m2:1100,sup:'M. Torres',crew:4,state:'En obra',start:'2026-10-19',fases:[1,1,1,0,0,0,0],real:{mat:72,lab:600},teo:{mat:124}},
+ {id:'OT-2026-090',cli:'Maseca · cuarto de máquinas',sys:'polu',m2:320,sup:'J. Ramírez',crew:2,state:'Detenida (material)',start:'2026-10-22',fases:[1,0,0,0],real:{mat:0,lab:0},teo:{mat:35}}
+];
+const FASES={L:['Limpieza e hidrolavado','Sellador / primer','Sellado de grietas y detalles','1ª capa','Membrana de refuerzo','2ª capa y entrega'],m2:['Limpieza','Primer asfáltico','Sellado de puntos críticos','Colocación de rollo por termofusión','Resoldar traslapes','Perímetro: cemento plástico','Acabado y entrega'],kg:['Preparación de superficie','Primer','Aplicación','Acabado y entrega']};
+const DEMO_DOCS=[
+ {id:'D1',src:'sat',prov:'Comercializadora Imperquimia Laguna SA de CV',desc:'CFDI recibido · 12 cubetas acrílico 10 años',date:'2026-10-22',total:12600,iva:2016,cat:'Material de obra',ot:'OT-2026-088',state:'pend',conf:.96,uuid:'3F2A…9C1'},
+ {id:'D2',src:'mail',prov:'Gas LP del Norte',desc:'CFDI por correo · gas para termofusión',date:'2026-10-21',total:2350,iva:376,cat:'Consumibles',ot:'OT-2026-089',state:'pend',conf:.9,uuid:'7B10…44E'},
+ {id:'D3',src:'foto',prov:'OXXO Gas · ticket',desc:'Foto de ticket · gasolina camioneta',date:'2026-10-22',total:1200,iva:0,cat:'Viáticos / traslado',ot:'OT-2026-088',state:'pend',conf:.82},
+ {id:'D4',src:'foto',prov:'Ferretería El Clavo',desc:'Foto de nota · brochas, cuñas, cinta',date:'2026-10-22',total:860,iva:0,cat:'Herramienta menor',ot:'OT-2026-089',state:'pend',conf:.71,warn:'Sin factura: pedir CFDI con RFC'},
+ {id:'D5',src:'sat',prov:'Unidad de Consulta Externa Torreón',desc:'CFDI emitido · anticipo 60% cot. 2026-041',date:'2026-10-23',total:154579,iva:21321,cat:'Ingreso · anticipo',ot:'—',state:'pend',conf:.99,uuid:'A91C…2D7',income:true},
+ {id:'D6',src:'banco',prov:'BBVA · estado de cuenta',desc:'Depósito SPEI $154,579 → concilia con CFDI anticipo',date:'2026-10-23',total:154579,iva:0,cat:'Cobro',ot:'—',state:'pend',conf:.97,income:true},
+ {id:'D7',src:'sat',prov:'Distribuidora Chovatek Norte',desc:'CFDI recibido · 40 rollos SBS 4.5 mm',date:'2026-10-18',total:60000,iva:9600,cat:'Material de obra',ot:'OT-2026-089',state:'ok',conf:.98,uuid:'C0DE…11F'},
+ {id:'D8',src:'sat',prov:'Proveedor desconocido SA',desc:'CFDI recibido · "servicios"  — RFC en lista 69-B',date:'2026-10-20',total:18000,iva:2880,cat:'?',ot:'?',state:'pend',conf:.3,warn:'Posible factura apócrifa (69-B). Revisar.'}
+];
+const DEMO_CXC=[
+ {cli:'LALA · Planta Torreón',fac:'F-2026-212',monto:325000,due:'2026-10-10',days:13},
+ {cli:'OXXO · Región Laguna',fac:'F-2026-219',monto:96500,due:'2026-10-30',days:-7},
+ {cli:'Altozano · Casa club',fac:'F-2026-220 (anticipo)',monto:294000,due:'2026-10-25',days:-2},
+ {cli:'Edgar Yáñez',fac:'Recibo',monto:6864,due:'2026-10-05',days:18}
+];
+const DEMO_INV=[
+ {p:'Acrílico fibratado 10 años 19 L',stock:14,min:20,unit:'cubeta',cost:1050,prov:'Kánuh (nacional)'},
+ {p:'Rollo SBS 4.5 mm gravilla blanca 10 m²',stock:62,min:40,unit:'rollo',cost:1500,prov:'Chovatek (nacional)'},
+ {p:'Primer asfáltico 19 L',stock:3,min:8,unit:'cubeta',cost:1326,prov:'Al-Koat'},
+ {p:'Cemento plástico asfáltico 19 L',stock:9,min:6,unit:'cubeta',cost:980,prov:'Nacional'},
+ {p:'Membrana de refuerzo 1.05×100 m',stock:4,min:4,unit:'rollo',cost:1100,prov:'Nacional'},
+ {p:'Poliurea 2 comp. 20 kg (A+B)',stock:0,min:6,unit:'juego',cost:3200,prov:'Importado'}
+];
+
+/* ===== estado y persistencia ===== */
+const KEY='proseal_os_v02';
+let S;
+function fresh(){return {leads:structuredClone(DEMO_LEADS),quotes:structuredClone(DEMO_QUOTES),ots:structuredClone(DEMO_OTS),docs:structuredClone(DEMO_DOCS),cxc:structuredClone(DEMO_CXC),inv:structuredClone(DEMO_INV),seq:43,tenant:'impertodo',role:'admin'}}
+try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){S=null}
+if(!S||!S.leads)S=fresh();
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function resetDemo(){S=fresh();persist();location.hash='#hoy';renderAll();toast('Demo restaurada')}
+let Q={step:1,lead:'L1',optA:'acr10',optB:'sbs45',sel:'B',diag:false,extras:EXTRAS_DEF.map(e=>({...e})),folio:null,photos:5};
+let docFilter='pend';
+
+/* ===== shell ===== */
+const VIEWS=['hoy','cotizar','obra','mas','clientes','cotizaciones','gastos','cobrar','inventario','captacion','propuesta','catalogo','central'];
+function route(){const h=(location.hash||'#hoy').slice(1);const v=VIEWS.includes(h)?h:'hoy';
+ document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='v-'+v));
+ document.querySelectorAll('.rail a').forEach(a=>{const cur=a.dataset.v===v||(a.dataset.v==='mas'&&!['hoy','cotizar','obra'].includes(v));if(cur)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+ if(v==='hoy')renderHoy();if(v==='obra')renderObra();if(v==='clientes'){renderKanban();renderCuentas()}if(v==='cotizaciones')renderQuotes();if(v==='gastos')renderDocs();if(v==='cobrar')renderCobrar();if(v==='inventario')renderInv();if(v==='propuesta')renderProp();if(v==='catalogo')renderCat();if(v==='central')renderCentral();if(v==='cotizar')calc();
+ window.scrollTo({top:0})}
+window.addEventListener('hashchange',route);
+function setTenant(t){S.tenant=t;persist();document.documentElement.setAttribute('data-tenant',t);$('tnImp').setAttribute('aria-pressed',t==='impertodo');$('tnPro').setAttribute('aria-pressed',t==='proseal');$('brandMark').textContent=t==='impertodo'?'I':'P';renderProp()}
+function setRole(r){S.role=r;persist();['rAdmin','rSup','rGer'].forEach(i=>$(i).setAttribute('aria-pressed',false));$({admin:'rAdmin',sup:'rSup',ger:'rGer'}[r]).setAttribute('aria-pressed',true);
+ location.hash=r==='sup'?'#obra':'#hoy';renderAll();toast(r==='admin'?'Administración: bandeja, cotizador, cobranza':r==='sup'?'Supervisor: solo Obra, sin márgenes':'Gerencia: semáforos y aprobaciones')}
+function openModal(){$('modal').classList.add('open');$('nCli').focus()}function closeModal(){$('modal').classList.remove('open')}
+function createLead(){const cli=$('nCli').value.trim();if(!cli){toast('Escribe el nombre del cliente');return}
+ const l={id:'L'+Date.now(),cli,at:$('nCon').value,wa:$('nWa').value,sec:$('nSec').value,obra:$('nObra').value,m2:num('nM2'),stage:0,src:$('nFuente').value,next:$('nNext').value||'Agendar visita',days:0,amt:'por cotizar',k:'cool'};
+ S.leads.unshift(l);persist();closeModal();$('nCli').value='';renderKanban();fillLeadSelect();Q.lead=l.id;loadLead();toast('Prospecto creado · abre Cotizar cuando quieras')}
+function advance(id){const l=S.leads.find(x=>x.id===id);if(!l)return;l.stage=Math.min(4,l.stage+1);l.days=0;persist();renderKanban();toast(l.cli+' → '+STAGES[l.stage])}
+
+/* ===== motor de cotización ===== */
+function areas(){const planta=num('mPlanta'),per=num('mPer'),alt=num('mAlt'),baj=num('mBaj'),dom=num('mDom'),duc=num('mDuc');const pretil=per*alt,chaflan=per*.15,bajantes=baj*.5,domos=dom*1.2,ductos=duc*.4;return {planta,pretil,chaflan,bajantes,domos,ductos,dev:planta+pretil+chaflan+bajantes+domos+ductos}}
+function matUnits(key,area){const s=SYSTEMS[key];const packs=Math.ceil(area*s.cons*(1+s.waste)/s.pack);const factor=($('pProv')&&$('pProv').value==='psm')?.7:1;return {packs,unitName:s.unit==='L'?'cubetas 19 L':s.unit==='m2'?'rollos 10 m²':'cubetas/sacos 20 kg',cost:packs*s.packPrice*factor}}
+function costBreak(key,area){const s=SYSTEMS[key];const m=matUnits(key,area);const acc=parseFloat(($('cAcceso')||{value:1}).value)||1;const labor=area*s.labor*acc,cons=area*s.cons2,mov=num('cMov');const ind=(num('pInd')||8)/100;const direct=m.cost+labor+cons+mov;return {mat:m.cost,packs:m.packs,unitName:m.unitName,labor,cons,mov,ind:direct*ind,total:direct*(1+ind)}}
+function price(key){const s=SYSTEMS[key];return ($('qPromo')&&$('qPromo').value==='list')?s.list:s.promo}
+function perYear(key){const s=SYSTEMS[key];const maint=s.unit==='L'?18:6;return (s.promo+maint*s.life*.5)/s.life}
+function selKey(){return Q.sel==='A'?Q.optA:Q.optB}
+function extrasOn(){return Q.extras.filter(e=>e.on)}
+function quoteTotals(key){const a=areas();const p=price(key);const main=a.dev*p;const ext=extrasOn().reduce((x,e)=>x+e.q*e.pu,0);const sub=main+ext;const fact=($('cFact')||{value:'si'}).value==='si';const iva=fact?sub*.16:0;const cb=costBreak(key,a.dev);const extCost=extrasOn().reduce((x,e)=>x+e.q*e.pu*e.cost,0);const cost=cb.total+extCost;const m=sub?(sub-cost)/sub:0;return {a,p,main,ext,sub,iva,total:sub+iva,cb,extCost,cost,m,fact}}
+function cls(m){const floor=(num('pMargen')||30)/100;return m>=floor?'ok':m>=floor-.07?'warn':'bad'}
+function goStep(n){Q.step=n;document.querySelectorAll('#steps button').forEach(b=>{const s=+b.dataset.s;b.classList.toggle('done',s<n);if(s===n)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});for(let i=1;i<=5;i++)$('s'+i).classList.toggle('active',i===n);if(location.hash!=='#cotizar')location.hash='#cotizar';calc();window.scrollTo({top:0})}
+function fillLeadSelect(){$('cLead').innerHTML=S.leads.map(l=>`<option value="${l.id}" ${l.id===Q.lead?'selected':''}>${esc(l.cli)}</option>`).join('')}
+function loadLead(){Q.lead=$('cLead').value;const l=S.leads.find(x=>x.id===Q.lead);if(!l)return;$('cCliente').value=l.cli;$('cAt').value=l.at||'';$('cWa').value=l.wa||'';$('cSector').value=l.sec;$('cObra').value=l.obra||'';$('mPlanta').value=l.m2||0;$('cFuente').value=l.src||'Referido';$('cFact').value=l.sec==='Residencial'?'no':'si';calc()}
+function newQuote(){Q={step:1,lead:S.leads[0].id,optA:'acr10',optB:'sbs45',sel:'B',diag:false,extras:EXTRAS_DEF.map(e=>({...e})),folio:null,photos:5};$('diag').innerHTML='<p class="muted small">Pulsa "Analizar con IA".</p>';$('diagState').textContent='Pendiente';$('diagState').className='chip info';fillLeadSelect();loadLead();goStep(1);$('qFolio').textContent='Cotizador · nuevo folio (se asigna al guardar)'}
+function calc(){if(!$('calcOut'))return;const a=areas(),diff=a.dev-a.planta;
+ $('calcOut').innerHTML=`<div>Losa en planta</div><div class="num">${a.planta.toLocaleString('es-MX',{maximumFractionDigits:2})} m²</div><div>Pretiles (${num('mPer')} m × ${num('mAlt')} m)</div><div class="num">${a.pretil.toFixed(1)} m²</div><div>Chaflanes (perímetro × 0.15)</div><div class="num">${a.chaflan.toFixed(1)} m²</div><div>Bajantes y domos</div><div class="num">${(a.bajantes+a.domos).toFixed(1)} m²</div><div>Ductos</div><div class="num">${a.ductos.toFixed(1)} m²</div><div class="tot">Área desarrollada</div><div class="num tot">${a.dev.toFixed(1)} m²</div><div class="small muted" style="grid-column:1/-1;margin-top:4px">Cotizar solo planta deja <b>${diff.toFixed(0)} m² (${a.planta?(diff/a.planta*100).toFixed(1):0}%)</b> sin cobrar ≈ <b>${FMT(diff*SYSTEMS.sbs45.promo)}</b> en SBS. ${$('mVer').value==='no'?'<span class="vz chk">A RESERVA DE VERIFICAR ÁREA</span>':'<span class="vz ok">ÁREA VERIFICADA</span>'}</div>`;
+ renderOptions();renderExtras();renderAPU();renderSummary()}
+function optCard(key,letter){const s=SYSTEMS[key],t=quoteTotals(key),c=cls(t.m),sel=Q.sel===letter;
+ return `<div class="option ${sel?'selected':''}" onclick="Q.sel='${letter}';calc()"><span class="reco ${letter==='B'?'':'alt'}">${letter==='B'?'Recomendada':'Lo que pidió el cliente'}</span>
+ <div class="row between"><div><div class="eyebrow">Opción ${letter}</div><h3>${esc(s.name)}</h3></div><select onclick="event.stopPropagation()" onchange="Q.opt${letter}=this.value;calc()" style="max-width:180px">${Object.keys(SYSTEMS).map(k=>`<option value="${k}" ${k===key?'selected':''}>${SYSTEMS[k].short}</option>`).join('')}</select></div>
+ <div class="price"><s>${FMT(s.list)}</s>${FMT(price(key))} <small>/ m² ${t.fact?'+ IVA':'neto'}</small></div>
+ <dl><dt>Total ${t.a.dev.toFixed(0)} m² + partidas</dt><dd>${FMT(t.total)}</dd><dt>Vida útil · garantía</dt><dd>${s.life} a · ${s.warranty} a</dd><dt><b>Costo por m² por año</b></dt><dd><b>${FMT(perYear(key))}</b></dd><dt>Material</dt><dd>${t.cb.packs} ${t.cb.unitName}</dd><dt>Pago</dt><dd>${s.pago}</dd></dl>
+ ${S.role!=='sup'?`<div class="row between"><span class="small muted">Margen bruto</span><span class="semaforo ${c}">${(t.m*100).toFixed(0)}%</span></div><div class="meter"><i style="width:${Math.max(0,Math.min(100,t.m*200))}%;background:var(--${c})"></i><span class="floor" style="left:${(num('pMargen')||30)*2}%"></span></div>`:''}</div>`}
+function renderOptions(){if($('options'))$('options').innerHTML=optCard(Q.optA,'A')+optCard(Q.optB,'B')}
+function renderExtras(){if(!$('extras'))return;$('extras').innerHTML='<tr><th></th><th>Concepto</th><th>Unidad</th><th class="num">Cant.</th><th class="num">P.U.</th><th class="num">Importe</th></tr>'+Q.extras.map((e,i)=>`<tr><td><input type="checkbox" ${e.on?'checked':''} onchange="Q.extras[${i}].on=this.checked;calc()" style="width:auto"></td><td>${esc(e.c)}<br><span class="small muted">${esc(e.src)}</span></td><td>${e.u}</td><td class="num"><input type="number" value="${e.q}" style="width:70px;text-align:right" onchange="Q.extras[${i}].q=+this.value;calc()"></td><td class="num"><input type="number" value="${e.pu}" style="width:80px;text-align:right" onchange="Q.extras[${i}].pu=+this.value;calc()"></td><td class="num">${FMT(e.q*e.pu)}</td></tr>`).join('')}
+function addExtra(){Q.extras.push({id:'x'+Date.now(),c:'Concepto adicional',u:'m²',q:1,pu:100,cost:.68,on:true,src:'Manual'});calc()}
+function renderAPU(){if(!$('apu'))return;const key=selKey(),s=SYSTEMS[key],t=quoteTotals(key);$('apuTitle').textContent=`Opción ${Q.sel} · ${s.name}`;$('proc').textContent=s.proc;$('qVig').textContent='Vigencia 30 días · vence '+dstr(addDays(today,30));
+ const rows=[{c:`Suministro y aplicación de ${s.name}, aplicado en losa, pretiles y detalles`,u:'m²',q:t.a.dev,pu:t.p},...extrasOn().map(e=>({c:e.c,u:e.u,q:e.q,pu:e.pu}))];
+ $('apu').innerHTML='<tr><th>Part.</th><th>Descripción</th><th>Unidad</th><th class="num">Cant.</th><th class="num">P. Uni.</th><th class="num">Importe</th></tr>'+rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.c)}</td><td>${r.u}</td><td class="num">${r.q.toLocaleString('es-MX',{maximumFractionDigits:2})}</td><td class="num">${FMT2(r.pu)}</td><td class="num">${FMT2(r.q*r.pu)}</td></tr>`).join('')+`<tr><td colspan="5" class="num"><b>Sub-total</b></td><td class="num"><b>${FMT2(t.sub)}</b></td></tr>`+(t.fact?`<tr><td colspan="5" class="num">IVA 16%</td><td class="num">${FMT2(t.iva)}</td></tr>`:`<tr><td colspan="6" class="small muted">Sin factura: precio neto. Si requiere factura sería más IVA.</td></tr>`)+`<tr><td colspan="5" class="num"><b>Total</b></td><td class="num"><b>${FMT2(t.total)}</b></td></tr>`;
+ const c=cls(t.m);const checks=[
+  {k:'ok',t:'Área desarrollada incluye pretiles, chaflanes, bajantes y domos.'},
+  {k:$('mVer').value==='si'?'ok':'warn',t:$('mVer').value==='si'?'Área verificada en sitio.':'Área no verificada: lleva "a reserva de verificar área". Programar visita.'},
+  {k:($('mPend').value==='ok'||Q.extras.find(e=>e.id==='pen').on)?'ok':'bad',t:($('mPend').value==='ok'||Q.extras.find(e=>e.id==='pen').on)?'Pendiente/drenaje atendido.':'Encharcamiento sin partida de corrección de pendiente: la garantía no se sostiene.'},
+  {k:Q.diag?'ok':'warn',t:Q.diag?'Diagnóstico IA adjunto.':'Sin diagnóstico: puedes enviar, pero conviene correr el análisis de fotos.'},
+  {k:'ok',t:`Producto y espesor consistentes entre título y procedimiento (${s.short}). Error real evitado: cot. 2026-042 decía 4.5 mm y 3.5 mm.`},
+  {k:s.warranty<s.life?'warn':'ok',t:s.warranty<s.life?`Producto "${s.life} años" con garantía ${s.warranty} años: la propuesta explica la diferencia (mantenimiento).`:'Garantía consistente.'},
+  {k:c==='bad'?'bad':c==='warn'?'warn':'ok',t:`Margen ${(t.m*100).toFixed(0)}% vs piso ${num('pMargen')||30}%${c==='bad'?' — requiere autorización de gerencia (queda registrado)':''}.`},
+  {k:'ok',t:'Vigencia 30 días, esquema '+s.pago+', domicilio y "45 años" unificados (plantillas actuales mezclan 45/50 y dos direcciones).'}];
+ $('checks').innerHTML=checks.map(x=>`<div class="check"><span class="ic ${x.k}">${x.k==='ok'?'✓':'!'}</span><div>${x.t}</div></div>`).join('');const bad=checks.filter(x=>x.k==='bad').length,warn=checks.filter(x=>x.k==='warn').length;$('valSummary').textContent=bad?`${bad} bloqueo · ${warn} avisos`:warn?`${warn} avisos`:'Lista para enviar';$('valSummary').className='chip '+(bad?'bad':warn?'warn':'ok')}
+function renderSummary(){if(!$('summary'))return;const key=selKey(),s=SYSTEMS[key],t=quoteTotals(key),c=cls(t.m);
+ $('summary').innerHTML=`<div>Cliente</div><div class="num">${esc($('cCliente').value||'—')}</div><div>Sistema</div><div class="num">${s.short}</div><div>Área desarrollada</div><div class="num">${t.a.dev.toFixed(0)} m²</div><div>Precio / m²</div><div class="num">${FMT(t.p)}</div><div>Partidas previas</div><div class="num">${FMT(t.ext)}</div><div>Sub-total</div><div class="num">${FMT(t.sub)}</div><div>IVA</div><div class="num">${FMT(t.iva)}</div><div class="tot">Total</div><div class="num tot">${FMT(t.total)}</div>`;
+ $('margen').innerHTML=S.role==='sup'?'<p class="small muted">Margen visible solo para administración y gerencia.</p>':`<div class="row between"><span class="semaforo ${c}" style="font-size:24px">${(t.m*100).toFixed(1)}%</span><span class="small muted">piso ${num('pMargen')||30}%</span></div><div class="meter" style="margin:8px 0 10px"><i style="width:${Math.max(0,Math.min(100,t.m*200))}%;background:var(--${c})"></i><span class="floor" style="left:${(num('pMargen')||30)*2}%"></span></div><div class="calc small"><div>Material: ${t.cb.packs} ${t.cb.unitName}</div><div class="num">${FMT(t.cb.mat)}</div><div>Destajo × acceso</div><div class="num">${FMT(t.cb.labor)}</div><div>Consumibles + movilización</div><div class="num">${FMT(t.cb.cons+t.cb.mov)}</div><div>Indirectos</div><div class="num">${FMT(t.cb.ind)}</div><div>Costo partidas previas</div><div class="num">${FMT(t.extCost)}</div><div class="tot">Utilidad bruta</div><div class="num tot">${FMT(t.sub-t.cost)}</div></div><p class="small muted" style="margin-top:6px">${c==='bad'?'<b>Bajo piso.</b> Usa precio de lista o quita partidas; requiere autorización.':c==='warn'?'Cerca del piso: la promoción se come el margen.':'Dentro de política.'} Costos <span class="vz chk">VERIFICAR</span></p>`}
+function saveQuote(send){const key=selKey(),t=quoteTotals(key);if(!Q.folio){Q.folio='2026-0'+(S.seq++);}const l=S.leads.find(x=>x.id===Q.lead);
+ const q={id:Q.folio,lead:Q.lead,cli:$('cCliente').value,sys:key,m2:t.a.dev,sub:t.sub,total:t.total,state:send?'Enviada':'Borrador',date:today.toISOString().slice(0,10),margin:t.m};
+ const i=S.quotes.findIndex(x=>x.id===q.id);if(i>=0)S.quotes[i]=q;else S.quotes.unshift(q);if(l&&send&&l.stage<2){l.stage=2;l.days=0;l.amt=FMT(t.total)}persist();$('qFolio').textContent='Cotización #'+q.id+' · '+q.state;$('sumState').textContent=q.state;toast(send?'Cotización '+q.id+' enviada por WhatsApp · seguimiento automático día 3/7/14/25':'Guardada como borrador '+q.id)}
+function approveQuote(id){const q=S.quotes.find(x=>x.id===id);if(!q)return;q.state='Aprobada';const s=SYSTEMS[q.sys];const ot={id:'OT-2026-0'+(90+S.ots.length),cli:q.cli,sys:q.sys,m2:Math.round(q.m2),sup:'J. Ramírez',crew:3,state:'Por iniciar',start:today.toISOString().slice(0,10),fases:FASES[s.unit].map(()=>0),real:{mat:0,lab:0},teo:{mat:matUnits(q.sys,q.m2).packs}};S.ots.unshift(ot);const l=S.leads.find(x=>x.id===q.lead);if(l){l.stage=4;l.k='cool'}persist();renderQuotes();toast('Aprobada → '+ot.id+' creada, materiales reservados, garantía programada')}
+function dictar(){const d=$('dictado');d.innerHTML='<span class="chip info">Transcribiendo…</span>';setTimeout(()=>{d.innerHTML='🎙 "Losa mil trescientos catorce, pretil de cuarenta todo el perímetro ciento cincuenta metros, cuatro bajantes, un domo, ducto de seis metros, encharca en la esquina noreste" → <span class="chip ok">campos llenados</span>';$('mPlanta').value=1314.18;$('mPer').value=150;$('mAlt').value=.4;$('mBaj').value=4;$('mDom').value=1;$('mDuc').value=6;$('mPend').value='charcos';calc()},900)}
+function addPhotos(inp,target){const ph=$(target);const add=ph.querySelector('.add');[...inp.files].forEach(f=>{const r=new FileReader();r.onload=e=>{const d=document.createElement('div');d.className='ph';d.innerHTML=`<img src="${e.target.result}" alt=""><span class="lbl">${esc(f.name)}</span>`;ph.insertBefore(d,add)};r.readAsDataURL(f)});Q.photos+=inp.files.length;if($('phCount'))$('phCount').textContent=Q.photos+' fotos';toast(inp.files.length+' foto(s) · GPS y hora registrados')}
+function analizar(){const st=$('diagState');st.textContent='Analizando…';st.className='chip info';$('diag').innerHTML='<p class="small muted">Revisando fotos contra el árbol de fallas…</p>';setTimeout(()=>{Q.diag=true;st.textContent='Listo · confianza 0.86';st.className='chip ok';Q.extras.forEach(e=>e.on=true);
+ $('diag').innerHTML=`<div class="card soft"><div class="eyebrow">Sistema existente</div><b>Acrílico fibratado ≈ 4 años, adherencia parcial</b><div class="small muted">No sobreponer en zonas ampolladas.</div></div><div class="finding"><span class="sev c">Crítico</span><div><b>Encharcamiento NE (≈45 m²)</b><div class="small muted">Sin pendiente mínima ningún sistema dura.</div></div><span class="small">→ pendiente</span></div><div class="finding"><span class="sev c">Crítico</span><div><b>Ampollas ≈15% de la losa</b><div class="small muted">Vapor atrapado; retirar antes de aplicar.</div></div><span class="small">→ retiro</span></div><div class="finding"><span class="sev a">Alto</span><div><b>Fisuras en pretil sur (≈38 ml)</b></div><span class="small">→ resane</span></div><div class="finding"><span class="sev a">Alto</span><div><b>Bajante 2 y domo sin refuerzo</b></div><span class="small">→ refuerzo</span></div><div class="card" style="background:var(--accent-soft);border-color:transparent"><div class="eyebrow">Recomendación</div><b>Rollo SBS 4.5 mm</b> como principal; alternativa acrílico 10 años solo con pendiente corregida y mantenimiento anual. <span class="small muted">Skill impermeabilizacion-pro · el supervisor confirma en sitio.</span></div>`;calc();toast('Diagnóstico listo: 4 partidas previas activadas')},1100)}
+function recomendar(){Q.optA='acr10';Q.optB='sbs45';Q.sel='B';calc();toast('IA: Opción B (SBS) por encharcamiento + ampollas')}
+</script>
+<script>
+/* ===== HOY ===== */
+function renderHoy(){const r=S.role;$('hoyDate').textContent='Viernes 23 · octubre · 2026';
+ const pend=S.docs.filter(d=>d.state==='pend').length,venc=S.cxc.filter(c=>c.days>0),vencM=venc.reduce((x,c)=>x+c.monto,0),open=S.quotes.filter(q=>q.state==='Enviada'),low=S.quotes.filter(q=>q.margin!==undefined&&q.margin<(num('pMargen')||30)/100),det=S.ots.filter(o=>o.state.startsWith('Detenida'));
+ $('hoyTitle').textContent=r==='ger'?'Gerencia':r==='sup'?'Mi obra':'Buenos días, Impertodo';$('hoySub').innerHTML=r==='ger'?'Cinco semáforos y lo que requiere tu autorización. <span class="example">Cifras de ejemplo salvo [DATO JAMES].</span>':'Lo que mueve dinero hoy, con el botón que lo resuelve. <span class="example">Cifras de ejemplo salvo [DATO JAMES].</span>';
+ $('hoyActions').innerHTML=r==='sup'?'<a class="btn primary" href="#obra">Ir a mi obra</a>':'<a class="btn primary" href="#cotizar">+ Cotizar</a><button class="btn" onclick="openModal()">+ Prospecto</button>';
+ const k=r==='ger'?[['Margen real del mes','31%','piso <b>30%</b>','warn'],['Cotizaciones bajo piso',low.length,'<b>por autorizar</b>','bad'],['Cobranza vencida',FMT(vencM),venc.length+' facturas','bad'],['Obras detenidas',det.length,'material / clima','warn'],['Caja 30 días','+$412k','cobros − pagos','ok']]
+ :[['Cotizaciones · mes','14','<b>+56%</b> vs sep','ok'],['Tasa de cierre','50%','<b>[DATO JAMES]</b>','ok'],['Documentos por aprobar',pend,'bandeja','warn'],['Cobranza vencida',FMT(vencM),venc.length+' facturas','bad'],['Pipeline abierto','$1.86M','11 oportunidades','ok']];
+ $('hoyKpis').innerHTML=k.map(x=>`<div class="card kpi"><div class="eyebrow">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join('');
+ const items=[];
+ open.filter(q=>q.lead==='L1').slice(0,1).forEach(q=>items.push(['bad',`<b>Consulta Externa Torreón · Ing. Isaac Díaz</b> — 2 opciones ($257k / $501k) sin respuesta 18 días. Vence 4-nov. <span class="tag">Seguimiento IA redactado</span>`,`<button class="btn sm" onclick="toast('Seguimiento enviado por WhatsApp')">Enviar</button>`]));
+ venc.forEach(c=>items.push(['bad',`<b>${esc(c.cli)}</b> — ${esc(c.fac)} vencida ${c.days} días · ${FMT(c.monto)}`,`<button class="btn sm" onclick="toast('Recordatorio enviado a ${esc(c.cli)}')">Recordar</button>`]));
+ if(pend)items.push(['warn',`<b>${pend} documentos</b> en bandeja: ${S.docs.filter(d=>d.state==='pend'&&d.conf>=.9).length} listos para aprobar en lote, ${S.docs.filter(d=>d.state==='pend'&&d.warn).length} con alerta`,`<a class="btn sm" href="#gastos">Revisar</a>`]);
+ det.forEach(o=>items.push(['warn',`<b>${o.id} · ${esc(o.cli)}</b> — ${o.state}. Primer asfáltico bajo mínimo (3/8).`,`<a class="btn sm" href="#inventario">Pedir</a>`]));
+ low.forEach(q=>items.push(['warn',`<b>Cot. ${q.id} · ${esc(q.cli)}</b> — margen ${(q.margin*100).toFixed(0)}% bajo piso. Requiere autorización.`,`<button class="btn sm" onclick="toast('Autorizada por gerencia · registrado')">Autorizar</button>`]));
+ items.push(['info',`<b>Licitación IMSS Coahuila</b> — HGZ 16, apertura 29-oct, coincidencia 92%. Expediente pre-llenado.`,`<a class="btn sm" href="#captacion">Ver</a>`]);
+ items.push(['ok',`<b>OXXO Región Laguna</b> — 3 sucursales cumplen año 1 de garantía en noviembre → visitas de mantenimiento.`,`<button class="btn sm" onclick="toast('3 visitas agendadas')">Agendar</button>`]);
+ items.push(['info',`<b>Clima</b> — lunes y martes con lluvia: el agente propone mover OT-2026-089 al miércoles y avisar a Altozano.`,`<button class="btn sm" onclick="toast('Reprogramada y cliente avisado')">Aceptar</button>`]);
+ $('hoyList').innerHTML=items.map(i=>`<div><span class="dot ${i[0]}"></span><div style="flex:1">${i[1]}</div>${i[2]}</div>`).join('');$('hoyCount').textContent=items.length+' acciones';
+ $('hoySide').innerHTML=`<h3>Cotizaciones por semana</h3><div class="bars" style="margin:14px 0 24px"><div style="height:35%"><span>S37</span></div><div style="height:50%"><span>S38</span></div><div style="height:40%"><span>S39</span></div><div style="height:65%"><span>S40</span></div><div style="height:80%"><span>S41</span></div><div style="height:100%"><span>S42</span></div><div style="height:60%"><span>S43</span></div></div>`}
+
+/* ===== MÁS ===== */
+function renderMas(){const m=[['clientes','Clientes','Cuentas, activos, embudo'],['cotizaciones','Cotizaciones','Folios, estado, vigencia'],['gastos','Gastos','Bandeja SAT · correo · fotos · banco'],['cobrar','Cobrar','Cuentas por cobrar, utilidad por obra'],['inventario','Inventario','Stock, mínimos, pedidos'],['captacion','Captación','Estimador, WhatsApp, radar, licitaciones'],['propuesta','Propuesta viva','Vista del cliente'],['catalogo','Catálogo','Sistemas, costos, piso de margen'],['central','Central','Red de franquicias']];$('masGrid').innerHTML=m.map(x=>`<a class="card" href="#${x[0]}" style="text-decoration:none"><h3>${x[1]}</h3><p class="small muted">${x[2]}</p></a>`).join('')}
+
+/* ===== CLIENTES ===== */
+function renderKanban(){const q=($('qLead').value||'').toLowerCase();const k=$('kanban');k.innerHTML='';STAGES.forEach((st,i)=>{const items=S.leads.filter(l=>l.stage===i&&(l.cli+' '+(l.obra||'')+' '+(l.at||'')).toLowerCase().includes(q));const d=document.createElement('div');d.className='col';d.innerHTML=`<h4>${st}<span>${items.length}</span></h4>`+items.map(l=>`<div class="kcard ${l.k}"><div class="t">${esc(l.cli)} ${l.real?'<span class="vz ok">DATO JAMES</span>':''}</div><div class="m">${esc(l.next)}</div><div class="amt">${esc(l.amt)}</div><div class="foot"><span class="tag">${l.m2?l.m2.toLocaleString('es-MX')+' m²':''} · ${esc(l.src)}</span><span class="small muted">${l.days} d</span></div><div class="row" style="margin-top:6px"><button class="btn sm" onclick="Q.lead='${l.id}';fillLeadSelect();loadLead();goStep(1)">Cotizar</button>${i<4?`<button class="btn sm ghost" onclick="advance('${l.id}')">→ ${STAGES[i+1]}</button>`:''}</div></div>`).join('');k.appendChild(d)})}
+function renderCuentas(){$('cuentas').innerHTML='<tr><th>Cuenta</th><th>Sector</th><th class="num">Activos</th><th class="num">m² bajo garantía</th><th>Próximo</th></tr>'+[['Unidad de Consulta Externa Torreón','Gobierno/Salud',1,0,'<span class="chip warn">Cotizado</span>'],['OXXO · Región Laguna','Comercial',12,'3,420','<span class="chip ok">Mant. nov</span>'],['IMSS · HGZ No. 16','Gobierno/Salud',4,'5,800','<span class="chip info">Licitación</span>'],['LALA · Planta Torreón','Industrial',6,'9,150','<span class="chip ok">Garantía 2029</span>'],['Altozano · Casa club','Desarrollador',2,'1,100','<span class="chip ok">En obra</span>'],['Edgar Yáñez','Residencial',1,78,'<span class="chip ok">Garantía 2028</span>']].map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td>${r[4]}</td></tr>`).join('')}
+
+/* ===== COTIZACIONES ===== */
+function renderQuotes(){const cl={Borrador:'',Enviada:'warn',Aprobada:'ok',Vencida:'bad',Vista:'info'};$('quotesTbl').innerHTML='<tr><th>Folio</th><th>Cliente</th><th>Sistema</th><th class="num">m²</th><th class="num">Total</th><th>Estado</th><th>Vence</th><th></th></tr>'+S.quotes.map(q=>{const v=addDays(q.date,30),left=Math.round((v-today)/864e5);return `<tr><td><b>${q.id}</b> ${q.real?'<span class="vz ok">DATO JAMES</span>':''}<br><span class="small muted">${dstr(q.date)}</span></td><td>${esc(q.cli)}</td><td>${SYSTEMS[q.sys].short}</td><td class="num">${q.m2.toLocaleString('es-MX',{maximumFractionDigits:0})}</td><td class="num"><b>${FMT(q.total)}</b></td><td><span class="chip ${cl[q.state]||''}">${q.state}</span></td><td class="${left<7&&q.state==='Enviada'?'small':'small muted'}">${q.state==='Aprobada'?'—':(left<0?'vencida':left+' días')}</td><td><div class="row">${q.state!=='Aprobada'?`<button class="btn sm ok" onclick="approveQuote('${q.id}')">Aprobar → OT</button>`:''}<button class="btn sm" onclick="toast('WhatsApp enviado')">💬</button><button class="btn sm" onclick="printQuote('${q.id}')">PDF</button></div></td></tr>`}).join('')}
+
+/* ===== OBRA ===== */
+function renderObra(){const sel=$('otSel');sel.innerHTML=S.ots.map(o=>`<option value="${o.id}">${o.id} · ${esc(o.cli)}</option>`).join('');const o=S.ots.find(x=>x.id===(sel.value||S.ots[0].id))||S.ots[0];sel.value=o.id;const s=SYSTEMS[o.sys];const fases=FASES[s.unit];const done=o.fases.filter(Boolean).length;const pct=Math.round(done/fases.length*100);
+ $('otId').textContent=o.id+' · '+s.short;$('otTitle').textContent=o.cli;$('otMeta').textContent=`${o.m2.toLocaleString('es-MX')} m² · supervisor ${o.sup} · cuadrilla ${o.crew} · inicio ${dstr(o.start)}`;$('otState').textContent=o.state;$('otState').className='chip '+(o.state.startsWith('Detenida')?'bad':o.state==='Entregada'?'ok':'warn');
+ $('otBig').innerHTML=`<label class="btn big" for="faseFoto">📷 Foto de fase<input id="faseFoto" type="file" accept="image/*" capture="environment" hidden onchange="fotoFase(this,'${o.id}')"></label><button class="btn big" onclick="toast('Material registrado: 2 cubetas usadas')">📦 Material usado / recibido</button><label class="btn big" for="gastoFoto">🧾 Gasto (foto de ticket)<input id="gastoFoto" type="file" accept="image/*" capture="environment" hidden onchange="ticketPhoto(this,'${o.id}')"></label><button class="btn big" onclick="toast('Incidencia dictada y enviada a administración')">🎙 Incidencia por voz</button>`;
+ $('otProg').textContent=`${done}/${fases.length} fases · ${pct}%`;
+ $('fases').innerHTML=fases.map((f,i)=>`<div class="fase ${o.fases[i]?'done':''}"><span class="n">${o.fases[i]?'✓':i+1}</span><div class="t"><b>${f}</b><span>${o.fases[i]?'Foto geolocalizada · revisada por IA':'Pendiente'}</span></div>${o.fases[i]?'':`<button class="btn sm primary" onclick="marcarFase('${o.id}',${i})">Foto + listo</button>`}</div>`).join('');
+ const mermaP=o.teo.mat?((o.real.mat-o.teo.mat*(done/fases.length))/(o.teo.mat||1)*100):0;$('mermaChip').textContent=o.real.mat?`${o.real.mat}/${o.teo.mat} ${matUnits(o.sys,o.m2).unitName}`:'sin consumo';$('mermaChip').className='chip '+(o.real.mat>o.teo.mat?'bad':'ok');
+ $('consumo').innerHTML=`<tr><th>Concepto</th><th class="num">Teórico</th><th class="num">Real</th><th class="num">Dif.</th></tr><tr><td>${s.short} (${matUnits(o.sys,o.m2).unitName})</td><td class="num">${o.teo.mat}</td><td class="num"><input type="number" value="${o.real.mat}" style="width:70px;text-align:right" onchange="setReal('${o.id}',+this.value)"></td><td class="num">${o.real.mat-o.teo.mat>0?'<span class="semaforo bad">+'+(o.real.mat-o.teo.mat)+'</span>':'<span class="semaforo ok">ok</span>'}</td></tr><tr><td>Destajo (m² avanzados)</td><td class="num">${o.m2}</td><td class="num">${o.real.lab}</td><td class="num">${pct}%</td></tr>`;
+ $('qa').innerHTML=(o.fases[2]?'<div><span class="dot warn"></span><div><b>Foto fase 3:</b> posible traslape corto en junta norte (≈6 cm, mínimo 10). Pedir al supervisor verificar. <button class="btn sm" onclick="toast(\'Marcado como corregido\')">Corregido</button></div></div>':'')+(o.fases[1]?'<div><span class="dot ok"></span><div><b>Foto fase 2:</b> primer uniforme, sin charcos visibles.</div></div>':'')+(o.fases[0]?'<div><span class="dot ok"></span><div><b>Foto fase 1:</b> superficie limpia; se detecta humedad residual en esquina NE: esperar secado.</div></div>':'<div><span class="dot info"></span><div>Sin fotos todavía.</div></div>');
+ initSig()}
+function marcarFase(id,i){const o=S.ots.find(x=>x.id===id);o.fases[i]=1;o.real.mat+=Math.round(o.teo.mat/o.fases.length);o.real.lab=Math.round(o.m2*o.fases.filter(Boolean).length/o.fases.length);if(o.state==='Por iniciar')o.state='En obra';persist();renderObra();toast('Fase registrada en 1 toque · foto en cola de sincronización')}
+function fotoFase(inp,id){if(inp.files.length){const o=S.ots.find(x=>x.id===id);const i=o.fases.indexOf(0);if(i>=0)marcarFase(id,i)}}
+function setReal(id,v){const o=S.ots.find(x=>x.id===id);o.real.mat=v;persist();renderObra()}
+let sigOn=false,sigCtx;function initSig(){const c=$('sig');if(!c)return;sigCtx=c.getContext('2d');sigCtx.lineWidth=2;sigCtx.lineCap='round';sigCtx.strokeStyle=getComputedStyle(document.body).color;const pos=e=>{const r=c.getBoundingClientRect();const p=e.touches?e.touches[0]:e;return [(p.clientX-r.left)*c.width/r.width,(p.clientY-r.top)*c.height/r.height]};c.onpointerdown=e=>{sigOn=true;const [x,y]=pos(e);sigCtx.beginPath();sigCtx.moveTo(x,y)};c.onpointermove=e=>{if(!sigOn)return;const [x,y]=pos(e);sigCtx.lineTo(x,y);sigCtx.stroke()};c.onpointerup=c.onpointerleave=()=>sigOn=false}
+function clearSig(){const c=$('sig');sigCtx.clearRect(0,0,c.width,c.height)}
+function entregar(){const o=S.ots.find(x=>x.id===$('otSel').value);o.state='Entregada';o.fases=o.fases.map(()=>1);persist();renderObra();toast('Entregada · garantía digital emitida · CFDI de finiquito listo para timbrar')}
+
+/* ===== GASTOS ===== */
+function renderDocs(){const pend=S.docs.filter(d=>d.state==='pend');$('gastosKpis').innerHTML=[['Por aprobar',pend.length,'en bandeja'],['Listos para lote',pend.filter(d=>d.conf>=.9&&!d.warn).length,'confianza ≥ 90%'],['Con alerta',pend.filter(d=>d.warn).length,'duplicado · 69-B · sin CFDI'],['Capturado a mano','0','todo entró solo']].map(x=>`<div class="card kpi"><div class="eyebrow">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join('');
+ const list=S.docs.filter(d=>docFilter==='all'||(docFilter==='pend'?d.state==='pend':d.state==='ok'));const sn={sat:'SAT',mail:'Correo',foto:'Foto',banco:'Banco'};
+ $('docs').innerHTML=list.map(d=>`<div class="docrow"><div class="src ${d.src}">${sn[d.src]}</div><div><b>${esc(d.prov)}</b> ${d.uuid?`<span class="mono muted">${d.uuid}</span>`:''}<br><span class="small">${esc(d.desc)} · ${dstr(d.date)} · <b>${FMT(d.total)}</b>${d.iva?' (IVA '+FMT(d.iva)+')':''}</span><div class="row" style="margin-top:4px"><span class="chip ${d.income?'ok':'accent'}">${esc(d.cat)}</span><span class="chip">Obra: ${esc(d.ot)}</span><span class="chip ${d.conf>=.9?'ok':d.conf>=.7?'warn':'bad'}">IA ${Math.round(d.conf*100)}%</span>${d.warn?`<span class="chip bad">${esc(d.warn)}</span>`:''}</div></div><div class="row" style="flex-direction:column;align-items:stretch">${d.state==='pend'?`<button class="btn sm ok" onclick="docState('${d.id}','ok')">Aprobar</button><button class="btn sm" onclick="toast('Selecciona obra: OT-2026-088 / 089 / 090')">Cambiar obra</button><button class="btn sm bad" onclick="docState('${d.id}','rej')">Rechazar</button>`:`<span class="chip ok">Contabilizado</span>`}</div></div>`).join('')||'<p class="small muted" style="padding:10px 0">Nada pendiente.</p>'}
+function docState(id,s){const d=S.docs.find(x=>x.id===id);d.state=s;persist();renderDocs();toast(s==='ok'?'Asiento creado en Odoo y costo cargado a '+d.ot:'Rechazado y marcado para revisión')}
+function approveAll(){let n=0;S.docs.forEach(d=>{if(d.state==='pend'&&d.conf>=.9&&!d.warn){d.state='ok';n++}});persist();renderDocs();toast(n+' documentos aprobados en lote')}
+function simSat(){S.docs.unshift({id:'D'+Date.now(),src:'sat',prov:'Pinturas y Recubrimientos del Norte',desc:'CFDI recibido · sellador tapaporos 4 cubetas',date:today.toISOString().slice(0,10),total:3480,iva:557,cat:'Material de obra',ot:'OT-2026-088',state:'pend',conf:.94,uuid:'E4F1…8A0'});persist();renderDocs();toast('Descarga masiva SAT: 1 CFDI nuevo (python-satcfdi)')}
+function ticketPhoto(inp,ot){if(!inp.files.length)return;toast('Leyendo ticket con IA…');setTimeout(()=>{S.docs.unshift({id:'D'+Date.now(),src:'foto',prov:'Ticket · '+inp.files[0].name.slice(0,18),desc:'Foto de ticket · extraído por IA',date:today.toISOString().slice(0,10),total:540,iva:0,cat:'Viáticos / traslado',ot:ot||'OT-2026-088',state:'pend',conf:.84});persist();if(location.hash==='#gastos')renderDocs();toast('Ticket leído: $540 · propuesta obra '+(ot||'OT-2026-088')+' · en bandeja')},900);inp.value=''}
+
+/* ===== COBRAR ===== */
+function renderCobrar(){const venc=S.cxc.filter(c=>c.days>0),tot=S.cxc.reduce((x,c)=>x+c.monto,0);$('cobrarKpis').innerHTML=[['Por cobrar',FMT(tot),S.cxc.length+' facturas'],['Vencido',FMT(venc.reduce((x,c)=>x+c.monto,0)),venc.length+' facturas'],['Días promedio de cobro','38','meta 25'],['Cobrado este mes','$412k','vs $380k sep']].map(x=>`<div class="card kpi"><div class="eyebrow">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join('');
+ $('cxc').innerHTML='<tr><th>Cliente</th><th>Factura</th><th class="num">Monto</th><th>Vence</th><th></th></tr>'+S.cxc.map(c=>`<tr><td><b>${esc(c.cli)}</b></td><td>${esc(c.fac)}</td><td class="num">${FMT(c.monto)}</td><td>${c.days>0?`<span class="chip bad">vencida ${c.days} d</span>`:`<span class="chip ok">en ${-c.days} d</span>`}</td><td><button class="btn sm" onclick="toast('Recordatorio IA enviado por WhatsApp a ${esc(c.cli)}')">Recordar</button></td></tr>`).join('');
+ const pnl=[['OXXO Torreón Centro · OT-088',48165,.34,.31],['Altozano Casa club · OT-089',361900,.27,.22],['Edgar Yáñez · PU',17160,.17,.12],['LALA techumbre (sep)',690000,.35,.38]];$('pnl').innerHTML='<tr><th>Obra</th><th class="num">Vendido</th><th class="num">Cotizado</th><th class="num">Real</th></tr>'+pnl.map(r=>`<tr><td>${r[0]}</td><td class="num">${FMT(r[1])}</td><td class="num"><span class="semaforo ${cls(r[2])}">${Math.round(r[2]*100)}%</span></td><td class="num"><span class="semaforo ${cls(r[3])}">${Math.round(r[3]*100)}%</span></td></tr>`).join('')}
+
+/* ===== INVENTARIO ===== */
+function renderInv(){const f=$('pProv').value==='psm'?.7:1;$('inv').innerHTML='<tr><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Costo unit.</th><th>Proveedor</th><th>Estado</th><th class="num">Pedido propuesto</th></tr>'+S.inv.map(i=>{const st=i.stock<=0?'bad':i.stock<i.min?'warn':'ok';const ped=i.stock<i.min?Math.max(i.min*2-i.stock,0):0;return `<tr><td><b>${esc(i.p)}</b></td><td class="num">${i.stock} ${i.unit}</td><td class="num">${i.min}</td><td class="num">${FMT(i.cost*f)} ${f<1?'<span class="vz inf">PSM</span>':''}</td><td>${esc(i.prov)}</td><td><span class="chip ${st}">${st==='bad'?'Sin stock':st==='warn'?'Bajo mínimo':'OK'}</span></td><td class="num">${ped?'<b>'+ped+' '+i.unit+'</b>':'—'}</td></tr>`}).join('')}
+
+/* ===== CATÁLOGO ===== */
+function renderCat(){const floor=(num('pMargen')||30)/100,f=$('pProv').value==='psm'?.7:1;$('catTbl').innerHTML='<tr><th>Sistema</th><th class="num">Consumo</th><th class="num">Precio unidad</th><th class="num">Mat. $/m²</th><th class="num">Destajo</th><th class="num">Merma</th><th class="num">Vida · gar.</th><th class="num">Lista</th><th class="num">Promo</th><th class="num">Mín.</th><th class="num">Margen promo</th></tr>'+Object.entries(SYSTEMS).map(([k,s])=>{const matm2=s.cons*(1+s.waste)/s.pack*s.packPrice*f;const cost=(matm2+s.labor+s.cons2)*(1+(num('pInd')||8)/100);const m=(s.promo-cost)/s.promo;const min=cost/(1-floor);return `<tr><td><b>${s.short}</b><br><span class="small muted">${esc(s.name)}</span></td><td class="num">${s.cons} ${s.unit==='L'?'L/m²':s.unit==='m2'?'m²/m²':'kg/m²'}</td><td class="num"><input type="number" value="${Math.round(s.packPrice)}" style="width:80px;text-align:right" onchange="SYSTEMS['${k}'].packPrice=+this.value;renderCat();calc()"> <span class="vz chk">V</span></td><td class="num">${FMT(matm2)}</td><td class="num"><input type="number" value="${s.labor}" style="width:60px;text-align:right" onchange="SYSTEMS['${k}'].labor=+this.value;renderCat();calc()"> <span class="vz chk">V</span></td><td class="num">${Math.round(s.waste*100)}%</td><td class="num">${s.life} · ${s.warranty} a</td><td class="num">${FMT(s.list)}</td><td class="num"><b>${FMT(s.promo)}</b></td><td class="num">${FMT(min)}</td><td class="num"><span class="semaforo ${cls(m)}">${Math.round(m*100)}%</span></td></tr>`}).join('')}
+
+/* ===== CENTRAL ===== */
+function renderCentral(){const u=[['Impertodo Torreón','Matriz','ok',{cot:14,m:'31%',prod:'$845k',reg:'n/a'}],['Unidad Monterrey','Piloto (licenciatario)','warn',{cot:7,m:'28%',prod:'$312k',reg:'$18.7k'}],['Unidad Querétaro','Prospecto','info',{cot:0,m:'—',prod:'—',reg:'—'}]];$('central').innerHTML=u.map(x=>`<div class="card"><div class="row between"><h3>${x[0]}</h3><span class="chip ${x[2]}">${x[1]}</span></div><div class="calc" style="margin-top:10px"><div>Cotizaciones mes</div><div class="num">${x[3].cot}</div><div>Margen promedio</div><div class="num">${x[3].m}</div><div>Producto comprado</div><div class="num">${x[3].prod}</div><div>Regalía (6% ventas timbradas)</div><div class="num">${x[3].reg}</div></div></div>`).join('')+'<p class="example" style="grid-column:1/-1">Unidades de ejemplo: hoy solo existe Impertodo Torreón.</p>'}
+
+/* ===== PROPUESTA VIVA ===== */
+function renderProp(){if(!$('propScr'))return;const A=Q.optA,B=Q.optB,tA=quoteTotals(A),tB=quoteTotals(B);const sa=SYSTEMS[A],sb=SYSTEMS[B];
+ $('propScr').innerHTML=`<div class="hdr"><div class="eyebrow">${S.tenant==='impertodo'?'IMPERTODO · 45 años':'PROSEALMASTER · aplicador certificado'}</div><h3 style="font-size:22px;margin-top:4px">Propuesta para ${esc($('cCliente').value||'cliente')}</h3><p class="small" style="opacity:.8;margin-top:4px">${esc($('cObra').value||'')} · 23-oct-2026</p></div>
+ <div class="photos" style="grid-template-columns:1fr 1fr"><div class="ph" style="background:linear-gradient(160deg,#7d8a7a,#4e5a4b)"><span class="lbl">① Encharcamiento NE</span></div><div class="ph" style="background:linear-gradient(160deg,#b7b0a1,#857f71)"><span class="lbl">② Ampollas 15%</span></div></div>
+ <p class="small">Encontramos agua estancada en la zona noreste y un acrílico anterior despegado en ~15% de la losa. Sobreponer sin corregir repite la gotera en 1–2 lluvias.</p>
+ <div class="propopt pick"><div class="row between"><b>Recomendada · ${sb.short}</b><span class="chip accent">${sb.warranty} años garantía</span></div><div class="row between"><span class="muted small">Vida útil ${sb.life} años</span><b>${FMT(tB.total)}</b></div><div class="row between"><span class="muted small">Costo por m² por año</span><b>${FMT(perYear(B))}</b></div><button class="btn primary sm" onclick="toast('Opción B elegida · anticipo ${sb.pago.split('/')[0]}% solicitado')">Elegir esta</button></div>
+ <div class="propopt"><div class="row between"><b>Económica · ${sa.short}</b><span class="chip">${sa.warranty} años garantía</span></div><div class="row between"><span class="muted small">Vida útil ${sa.life} años con mantenimiento</span><b>${FMT(tA.total)}</b></div><div class="row between"><span class="muted small">Costo por m² por año</span><b>${FMT(perYear(A))}</b></div><button class="btn sm" onclick="toast('Opción A elegida · anticipo ${sa.pago.split('/')[0]}% solicitado')">Elegir esta</button></div>
+ <div><div class="eyebrow" style="margin-bottom:6px">Cronograma · ventana seca</div><div class="timeline"><div><b>Vie 24-oct</b>Preparación y retiro</div><div><b>Sáb 25-oct</b>Primer + membrana</div><div><b>Mié 29-oct</b>Detalles y entrega</div></div></div>
+ <div class="row" style="gap:12px"><div class="qr"></div><div class="small"><b>Garantía digital</b><br>Póliza con fotos de cada fase y visitas año 1, 3 y 5. Transferible.</div></div>
+ <div class="row between" style="border-top:1px solid var(--line);padding-top:10px"><div class="small"><b>Anticipo ${sb.pago.split('/')[0]}%</b><br>SPEI / tarjeta · CFDI automático <span class="vz inf">FASE 2</span></div><button class="btn ink sm" onclick="toast('Firma registrada · anticipo solicitado')">Aprobar y pagar</button></div>
+ <div class="small muted">Vigencia 30 días naturales · A reserva de verificar área · Impertodo · Blvd. Diagonal de las Fuentes #4099, Torreón · 871 732 2220</div>`}
+function copyLink(){const t='impertodopro.com/p/'+(Q.folio||'2026-043');navigator.clipboard.writeText(t).then(()=>toast('Enlace copiado: '+t)).catch(()=>toast('Enlace: '+t))}
+
+/* ===== PDF (plantilla actual de Impertodo) ===== */
+function printQuote(id){const key=selKey(),s=SYSTEMS[key],t=quoteTotals(key);const q=id?S.quotes.find(x=>x.id===id):null;
+ const html=`<div style="font-family:Arial,sans-serif;max-width:800px;margin:auto;padding:24px;color:#111;background:#fff"><div style="text-align:center;font-weight:900;font-size:16px;text-transform:uppercase">${esc(s.name)}</div><div style="text-align:center;letter-spacing:.4em;font-weight:900;margin:8px 0 16px">C O T I Z A C I Ó N</div>
+ <table style="width:100%;font-size:13px;border-collapse:collapse"><tr><td style="padding:4px"><b>EMPRESA / CLIENTE:</b> ${esc(q?q.cli:$('cCliente').value)}</td><td style="padding:4px"><b>FECHA:</b> ${today.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase()}</td></tr><tr><td style="padding:4px"><b>ATENCIÓN:</b> ${esc($('cAt').value)}</td><td style="padding:4px"><b>OBRA:</b> ${esc($('cObra').value)}</td></tr><tr><td style="padding:4px">TORREÓN, COAHUILA · WhatsApp: ${esc($('cWa').value)}</td><td style="padding:4px">impertodopro.com · Fb: Impertodotrc</td></tr></table>
+ <p style="font-size:13px;margin:14px 0">LE PRESENTAMOS COTIZACIÓN DE ${esc(s.name).toUpperCase()}, APLICADO EN LOSA DE LA SIGUIENTE MANERA:</p>
+ <table style="width:100%;font-size:13px;border-collapse:collapse;border:1px solid #333"><tr style="background:#eee"><th style="border:1px solid #333;padding:6px">PART</th><th style="border:1px solid #333;padding:6px">DESCRIPCIÓN</th><th style="border:1px solid #333;padding:6px">UNIDAD</th><th style="border:1px solid #333;padding:6px">CANT.</th><th style="border:1px solid #333;padding:6px">P. UNI.</th><th style="border:1px solid #333;padding:6px">IMPORTE</th></tr>
+ <tr><td style="border:1px solid #333;padding:6px;text-align:center">1</td><td style="border:1px solid #333;padding:6px">SUMINISTRO Y APLICACIÓN DE ${esc(s.name).toUpperCase()}, APLICADO EN LOSA, PRETILES Y DETALLES DE LA SIGUIENTE MANERA:<br>${s.proc.split(' · ').map(x=>'&nbsp;&nbsp;'+esc(x)).join('<br>')}</td><td style="border:1px solid #333;padding:6px;text-align:center">M2</td><td style="border:1px solid #333;padding:6px;text-align:right">${t.a.dev.toFixed(2)}</td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(t.p)}</td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(t.main)}</td></tr>
+ ${extrasOn().map((e,i)=>`<tr><td style="border:1px solid #333;padding:6px;text-align:center">${i+2}</td><td style="border:1px solid #333;padding:6px">${esc(e.c).toUpperCase()}</td><td style="border:1px solid #333;padding:6px;text-align:center">${e.u.toUpperCase()}</td><td style="border:1px solid #333;padding:6px;text-align:right">${e.q}</td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(e.pu)}</td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(e.q*e.pu)}</td></tr>`).join('')}
+ <tr><td colspan="5" style="border:1px solid #333;padding:6px;text-align:right"><b>SUB-TOTAL:</b></td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(t.sub)}</td></tr>${t.fact?`<tr><td colspan="5" style="border:1px solid #333;padding:6px;text-align:right">IVA:</td><td style="border:1px solid #333;padding:6px;text-align:right">${FMT2(t.iva)}</td></tr>`:''}<tr><td colspan="5" style="border:1px solid #333;padding:6px;text-align:right"><b>TOTAL:</b></td><td style="border:1px solid #333;padding:6px;text-align:right"><b>${FMT2(t.total)}</b></td></tr></table>
+ <p style="font-size:12px;margin-top:14px"><b>NOTAS:</b><br>*VIGENCIA DE COTIZACIÓN: 30 DÍAS NATURALES*<br>*GARANTÍA DE ${s.warranty} AÑOS POR ESCRITO*${s.warranty<s.life?' (VIDA ÚTIL ESTIMADA '+s.life+' AÑOS CON MANTENIMIENTO)':''}<br>${$('mVer').value==='no'?'*QUEDA A RESERVA DE VERIFICAR ÁREA*<br>':''}${$('qPromo').value==='promo'?`*COSTO DE PROMOCIÓN DE ${FMT2(s.list)} A ${FMT2(s.promo)} M2*<br>`:''}*AL AUTORIZAR EL PRESUPUESTO ${s.pago.split('/')[0]}% DE ANTICIPO Y ${s.pago.split('/')[1]}% SOBRE AVANCE DE OBRA*${t.fact?'':'<br>*SI REQUIERE FACTURA SERÍA MÁS IVA*'}<br>***MÁS DE 45 AÑOS DE EXPERIENCIA***</p>
+ <p style="font-size:12px;margin-top:18px">ATENTAMENTE<br><b>JOSÉ JAIME PEÑA GARZA</b><br>Blvd. Diagonal de las Fuentes #4099, Col. Ejido La Merced, Torreón, Coah. · Tel. (871) 732 22 20 · WhatsApp (871) 171 37 56 · impertodotorreon@hotmail.com</p>
+ <p style="font-size:11px;color:#777;margin-top:14px">Vista previa de la plantilla PDF generada por el sistema (prototipo). En producción se genera el PDF en servidor.</p></div>`;
+ const w=window.open('','_blank');if(w){w.document.write('<title>Cotización</title>'+html);w.document.close()}else{$('printArea').innerHTML=html;$('printArea').style.display='block';$('printArea').scrollIntoView();toast('Vista PDF abajo (el visor bloquea ventanas nuevas)')}}
+
+/* ===== captación ===== */
+function estimar(){const m2=num('ieM2'),tipo=$('ieTipo').value,o=$('ieOut');const lo=tipo.includes('Nave')?199:169,hi=tipo.includes('Nave')?260:390;o.style.display='block';o.innerHTML=`<div class="eyebrow">Tu estimado · ${m2} m² · ${tipo}</div><div style="font-family:var(--display);font-size:30px;font-weight:800;margin:6px 0">${FMT(m2*lo)} – ${FMT(m2*hi)}</div><div class="small">Acrílico 10 años (${FMT(lo)}/m²) a rollo SBS con 10 años de garantía (${FMT(hi)}/m²), + IVA. Incluye limpieza, sellado y refuerzo.</div><button class="btn primary sm" style="margin-top:8px" onclick="S.leads.unshift({id:'L'+Date.now(),cli:'Lead web · ${tipo}',at:'',wa:$('ieWa').value,sec:'${tipo.includes('Nave')?'Industrial':tipo.includes('casa')?'Residencial':'Comercial'}',obra:'',m2:${m2},stage:0,src:'Estimador web',next:'Llamar en 10 min',days:0,amt:'${FMT(m2*lo)}–${FMT(m2*hi)}',k:'cool'});persist();toast('Lead creado en Clientes · etapa Nuevo')">Quiero la visita</button>`}
+
+/* ===== barra de comando ===== */
+function runCmd(){const t=$('cmd').value.trim().toLowerCase();if(!t)return;
+ let m;if((m=t.match(/cotiza\w*\s+(\d+)\s*m2?\s+(acr[ií]lico|sbs|rollo|poliuretano|poliurea|silicona|epox\w*|cement\w*|aisl\w*)(?:\s*(7|10))?(?:\s+para\s+(.+))?/))){const map={acr:'acr10',sbs:'sbs45',rollo:'sbs45',poliuretano:'pu',poliurea:'polu',silicona:'sil',epox:'epx',cement:'cem',aisl:'ais'};let key=Object.keys(map).find(k=>m[2].startsWith(k));key=map[key];if(key==='acr10'&&m[3]==='7')key='acr7';
+  if(m[4]){S.leads.unshift({id:'L'+Date.now(),cli:m[4].replace(/\b\w/g,c=>c.toUpperCase()),at:'',wa:'',sec:'Comercial',obra:'',m2:+m[1],stage:0,src:'Comando',next:'Cotizar',days:0,amt:'por cotizar',k:'cool'});persist();Q.lead=S.leads[0].id}
+  fillLeadSelect();loadLead();$('mPlanta').value=+m[1];Q.optB=key;Q.sel='B';goStep(4);toast('Cotización preparada: '+m[1]+' m² · '+SYSTEMS[key].short);}
+ else if(t.includes('debe')){const name=t.replace(/.*debe\s*/,'').trim();const c=S.cxc.filter(x=>x.cli.toLowerCase().includes(name));location.hash='#cobrar';toast(c.length?c.map(x=>x.cli+': '+FMT(x.monto)+(x.days>0?' (vencida '+x.days+' d)':'')).join(' · '):'Sin saldo para "'+name+'"')}
+ else if(t.startsWith('agenda')){toast('Visita agendada: '+t.replace('agenda','').trim()+' · recordatorio al supervisor')}
+ else if(t.includes('obra')){location.hash='#obra'}else if(t.includes('gasto')||t.includes('factura')){location.hash='#gastos'}else toast('No entendí. Ejemplos: "cotiza 300 m2 acrílico 10 para OXXO", "cuánto debe LALA", "agenda visita viernes 9"');
+ $('cmd').value=''}
+function voiceCmd(){$('cmd').value='cotiza 300 m2 acrílico 10 para OXXO Hidalgo';toast('🎙 Dictado (simulado)');setTimeout(runCmd,500)}
+
+/* ===== init ===== */
+function renderAll(){renderMas();fillLeadSelect();if(!$('cCliente').value)loadLead();calc();route()}
+document.documentElement.setAttribute('data-tenant',S.tenant);$('tnImp').setAttribute('aria-pressed',S.tenant==='impertodo');$('tnPro').setAttribute('aria-pressed',S.tenant==='proseal');$('brandMark').textContent=S.tenant==='impertodo'?'I':'P';
+['rAdmin','rSup','rGer'].forEach(i=>$(i).setAttribute('aria-pressed',false));$({admin:'rAdmin',sup:'rSup',ger:'rGer'}[S.role]).setAttribute('aria-pressed',true);
+goStep(1);renderAll();
+</script>

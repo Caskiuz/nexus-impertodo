@@ -1,0 +1,396 @@
+// IMPERTODO AI OS — esquema compatible SQLite (dev) y PostgreSQL (producción).
+// Sin enums para mantener el mismo schema en ambos motores.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Unit {
+  id         String   @id @default(cuid())
+  name       String
+  city       String?
+  kind       String   @default("PROSPECTO") // MATRIZ | PILOTO | PROSPECTO | ACTIVA
+  model      String?
+  investment Float?
+  feasibility String?
+  createdAt  DateTime @default(now())
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("ADMIN") // GERENCIA | ADMIN | SUPERVISOR | CONTADOR | CENTRAL | DEV
+  unitId       String?
+  createdAt    DateTime @default(now())
+}
+
+model System {
+  key       String @id // acr7, acr10, sbs45, pu, polu, sil, cem, ais, epx
+  name      String
+  short     String
+  life      Int
+  warranty  Float
+  list      Float
+  promo     Float
+  unit      String // L | m2 | kg
+  cons      Float
+  pack      Int
+  packPrice Float
+  labor     Float
+  cons2     Float
+  waste     Float
+  pago      String
+  proc      String
+}
+
+model CostSheet {
+  id        String   @id @default(cuid())
+  systemKey String   @unique
+  supplier  String
+  material  Float
+  labor     Float
+  prep      Float
+  waste     Float
+  source    String
+  technical String
+  confirmed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  unitId    String
+  name      String
+  sector    String
+  contact   String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  assets    Asset[]
+  quotes    Quote[]
+}
+
+model Asset {
+  id            String    @id @default(cuid())
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name          String
+  area          Float?
+  warrantyUntil DateTime?
+  note          String?
+  createdAt     DateTime  @default(now())
+}
+
+model Lead {
+  id         String   @id @default(cuid())
+  unitId     String
+  company    String
+  contact    String?
+  phone      String?
+  sector     String   @default("Comercial")
+  project    String?
+  address    String?
+  area       Float?
+  amount     Float?
+  stage      Int      @default(0) // 0 Nuevo, 1 Levantamiento, 2 Cotizado, 3 Negociación, 4 Ganado
+  source     String   @default("Referido")
+  nextAction String?
+  daysInStage Int     @default(0)
+  heat       String   @default("cool") // hot | warm | cool
+  createdAt  DateTime @default(now())
+}
+
+model Quote {
+  id              String   @id @default(cuid())
+  folio           String
+  unitId          String
+  clientId        String?
+  client          Client?  @relation(fields: [clientId], references: [id])
+  clientName      String
+  contact         String?
+  phone           String?
+  sector          String   @default("Comercial")
+  element         String   @default("Losa de azotea no transitable")
+  address         String?
+  billing         String   @default("si") // si | no
+  access          String   @default("1") // 1 | 1.15 | 1.3
+  moving          Float    @default(0)
+  planta          Float    @default(0)
+  perim           Float    @default(0)
+  alt             Float    @default(0)
+  baj             Float    @default(0)
+  dom             Float    @default(0)
+  duc             Float    @default(0)
+  verified        Boolean  @default(false)
+  drainageOk      Boolean  @default(true)
+  diagnosed       Boolean  @default(false)
+  optA            String   @default("acr10")
+  optB            String   @default("sbs45")
+  selected        String   @default("B")
+  priceMode       String   @default("promo") // promo | lista | manual | margen
+  marginTarget    Float    @default(32)
+  discount        Float    @default(0)
+  floor           Float    @default(30)
+  indirect        Float    @default(8)
+  provider        String   @default("nac") // nac | psm
+  areaDev         Float    @default(0)
+  sub             Float    @default(0)
+  iva             Float    @default(0)
+  total           Float    @default(0)
+  margin          Float    @default(0)
+  status          String   @default("BORRADOR") // BORRADOR | ENVIADA | APROBADA | VENCIDA | RECHAZADA
+  approvalsAdmin    Boolean @default(false)
+  approvalsGerencia Boolean @default(false)
+  costsDocumented Boolean  @default(false)
+  catalogSource   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  extras          QuoteExtra[]
+  events          QuoteEvent[]
+  ot              OT?
+}
+
+model QuoteExtra {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  concept     String
+  unitName    String  @default("m²")
+  qty         Float   @default(1)
+  price       Float   @default(0)
+  costFactor  Float   @default(0.68)
+  enabled     Boolean @default(true)
+  sourceLabel String?
+}
+
+model QuoteEvent {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  type      String // OPEN | QUESTION | APPROVED | SENT | CREATED
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model OT {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  unitId      String
+  quoteId     String?    @unique
+  quote       Quote?     @relation(fields: [quoteId], references: [id])
+  clientName  String
+  systemKey   String
+  area        Float
+  supervisor  String?
+  crew        Int        @default(3)
+  status      String     @default("POR_INICIAR") // POR_INICIAR | EN_OBRA | DETENIDA | ENTREGADA
+  phases      Int        @default(4)
+  phasesDone  Int        @default(0)
+  matTheo     Float      @default(0)
+  matReal     Float      @default(0)
+  laborReal   Float      @default(0)
+  signature   String?
+  deliveredAt DateTime?
+  createdAt   DateTime   @default(now())
+  photos      OTPhoto[]
+}
+
+model OTPhoto {
+  id        String   @id @default(cuid())
+  otId      String
+  ot        OT       @relation(fields: [otId], references: [id], onDelete: Cascade)
+  phase     Int
+  label     String?
+  dataUrl   String?
+  createdAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id        String   @id @default(cuid())
+  name      String
+  stock     Float
+  min       Float
+  unitName  String
+  cost      Float
+  provider  String
+  updatedAt DateTime @updatedAt
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  itemId    String
+  qty       Float
+  reason    String
+  otCode    String?
+  createdAt DateTime @default(now())
+}
+
+model Doc {
+  id         String   @id @default(cuid())
+  unitId     String
+  source     String   @default("MANUAL") // SAT | CORREO | FOTO | BANCO | MANUAL
+  supplier   String
+  description String
+  date       DateTime @default(now())
+  total      Float
+  iva        Float    @default(0)
+  category   String   @default("Material de obra")
+  workRef    String?
+  uuid       String?  @unique
+  confidence Float    @default(1)
+  warn       String?
+  status     String   @default("PENDIENTE") // PENDIENTE | REVISADO | AUTORIZADO | RECHAZADO
+  adminOk    Boolean  @default(false)
+  gerenciaOk Boolean  @default(false)
+  income     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Invoice {
+  id        String   @id @default(cuid())
+  unitId    String
+  clientName String
+  folio     String
+  amount    Float
+  dueDate   DateTime
+  status    String   @default("PENDIENTE") // PENDIENTE | PAGADA
+  workRef   String?
+  createdAt DateTime @default(now())
+}
+
+model Tender {
+  id          String   @id @default(cuid())
+  unitId      String
+  convener    String
+  object      String
+  openingDate DateTime
+  match       Int      @default(80)
+  status      String   @default("DETECTADA")
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  unitId      String
+  description String
+  amount      Float
+  uuid        String?  @unique
+  folio       String?
+  customer    String
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model RoyaltyPeriod {
+  id         String   @id @default(cuid())
+  unitId     String
+  period     String // YYYY-MM
+  salesTotal Float
+  royalty6   Float
+  marketing2 Float
+  total      Float
+  status     String   @default("CALCULADA") // CALCULADA | FACTURADA | PAGADA
+  createdAt  DateTime @default(now())
+  @@unique([unitId, period])
+}
+
+model TechFee {
+  id        String   @id @default(cuid())
+  unitId    String
+  period    String
+  amount    Float    @default(2500)
+  status    String   @default("PENDIENTE") // PENDIENTE | PAGADO
+  createdAt DateTime @default(now())
+  @@unique([unitId, period])
+}
+
+model ProductOrder {
+  id        String   @id @default(cuid())
+  unitId    String
+  item      String
+  qty       Float
+  unitPrice Float
+  total     Float
+  status    String   @default("SOLICITADO") // SOLICITADO | ENVIADO | ENTREGADO
+  createdAt DateTime @default(now())
+}
+
+model Franchise {
+  id         String   @id @default(cuid())
+  name       String
+  city       String?
+  contact    String?
+  stage      String   @default("PROSPECTO") // PROSPECTO | EVALUACION | PILOTO | ACTIVA | ADQUIRIDA
+  investment Float?
+  feasibility String?
+  fee        Float?
+  unitId     String?
+  createdAt  DateTime @default(now())
+}
+
+model BusinessEvent {
+  id          String   @id @default(cuid())
+  type        String // SALE_TIMBRADA | FRANCHISE_ACQUIRED | ROYALTY_CALCULATED | TECH_FEE | PRODUCT_ORDER | QUOTE_APPROVED | DOC_AUTHORIZED
+  title       String
+  description String
+  amount      Float    @default(0)
+  unitId      String?
+  sourceId    String?
+  createdAt   DateTime @default(now())
+}
+
+model CommissionConfig {
+  id            String   @id @default("default")
+  rate          Float    @default(0.2)
+  onFranchiseFee Boolean @default(true)
+  onRoyalties   Boolean  @default(true)
+  onTechFee     Boolean  @default(true)
+  onProduct     Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+}
+
+model CommissionEntry {
+  id         String    @id @default(cuid())
+  eventId    String    @unique
+  baseAmount Float
+  rate       Float
+  amount     Float
+  status     String    @default("DEVENGADA") // DEVENGADA | COBRADA
+  unitId     String?
+  createdAt  DateTime  @default(now())
+  collectedAt DateTime?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  kind      String   @default("SYSTEM") // SALE | FRANCHISE | ROYALTY | FEE | ORDER | SYSTEM
+  read      Boolean  @default(false)
+  eventId   String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  role      String?
+  action    String
+  ref       String?
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id       String   @id @default("default")
+  floor    Float    @default(30)
+  indirect Float    @default(8)
+  provider String   @default("nac")
+  updatedAt DateTime @updatedAt
+}

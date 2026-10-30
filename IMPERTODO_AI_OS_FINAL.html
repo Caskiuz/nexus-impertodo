@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMPERTODO AI OS · MVP Final</title>
+<style>
+:root{
+  --azul:#1F4E79;--azul-600:#16405f;--azul-700:#0f2f47;--azul-50:#eaf1f8;--azul-100:#d7e4f0;
+  --verde:#2E7D32;--verde-600:#1f5c23;--verde-50:#e8f5e9;--verde-100:#c8e6c9;
+  --amarillo:#F4B81E;--naranja:#ef6c00;--naranja-50:#fff3e0;
+  --rojo:#c62828;--rojo-50:#ffebee;--azul-info:#1565c0;--azul-info-50:#e3f2fd;
+  --gris:#5f6b7a;--gris-50:#f1f4f8;--bg:#eef1f6;--linea:#e2e7ef;--texto:#17212b;
+  --radius:13px;--shadow:0 1px 2px rgba(15,47,71,.06),0 10px 30px rgba(15,47,71,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--texto);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:244px;background:linear-gradient(180deg,#122a40,#0f2438);color:#cfe0ee;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.content{flex:1;padding:22px;max-width:1440px;width:100%;margin:0 auto}
+
+.brand{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand .logo{display:flex;align-items:center;gap:10px}
+.brand .mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#F4B81E,#e0a800);color:#111;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
+.brand .name{font-weight:800;font-size:14px;color:#fff}
+.brand .sub{font-size:9.5px;color:#8fb0cc;letter-spacing:.5px;text-transform:uppercase}
+.nav{flex:1;overflow-y:auto;padding:10px 9px}
+.nav .grp{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:#5f82a3;padding:10px 10px 4px}
+.nav button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:0;color:#cfe0ee;padding:8px 10px;border-radius:8px;font-size:12.8px;margin-bottom:1px;transition:.15s}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.on{background:linear-gradient(90deg,rgba(244,184,30,.25),rgba(244,184,30,.08));color:#fff;font-weight:600}
+.nav button .ic{font-size:15px;width:19px;text-align:center}
+.nav button .badge{margin-left:auto;background:var(--verde);color:#fff;font-size:9.5px;font-weight:700;border-radius:20px;padding:1px 7px}
+.sidefoot{padding:12px 14px;border-top:1px solid rgba(255,255,255,.08);font-size:10.5px;color:#7fa3c0}
+
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:30}
+.topbar .burger{display:none;background:none;border:0;font-size:20px;color:var(--azul)}
+.cmd{flex:1;min-width:200px;display:flex;gap:5px;align-items:center;background:var(--gris-50);border:1px solid var(--linea);border-radius:999px;padding:4px 5px 4px 13px}
+.cmd input{border:0;background:transparent;padding:6px 0;flex:1;font-size:13px;outline:0;min-width:0}
+.cmd button{border:0;background:var(--azul-700);color:#fff;border-radius:999px;width:32px;height:32px;flex:none;font-size:14px}
+.cmd .hint{font-size:11px;color:var(--gris);white-space:nowrap;display:none}
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:999px;overflow:hidden;background:#fff}
+.seg select,.seg button{border:0;background:transparent;padding:6px 11px;font-size:12px;font-weight:600;color:var(--gris);outline:0}
+.seg button.on{background:var(--azul-700);color:#fff}
+
+.view{display:none;animation:fade .22s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.head h1{font-size:21px;font-weight:800;color:var(--azul-700);letter-spacing:-.02em}
+.head .sub{color:var(--gris);font-size:12.8px;margin-top:3px;max-width:72ch}
+.eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--linea);background:#fff;color:var(--azul);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;transition:.15s;text-decoration:none}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--verde),var(--verde-600));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(46,125,50,.26)}
+.btn.azul{background:linear-gradient(135deg,var(--azul),var(--azul-600));color:#fff;border-color:transparent}
+.btn.gold{background:linear-gradient(135deg,#F4B81E,#e0a800);color:#111;border-color:transparent}
+.btn.wa{background:#25D366;color:#fff;border-color:transparent}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn.ghost{background:transparent}
+
+.card{background:#fff;border:1px solid var(--linea);border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel{padding:17px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:16px}
+.kpi{padding:15px;position:relative;overflow:hidden}
+.kpi .lbl{font-size:10.5px;color:var(--gris);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.kpi .val{font-size:25px;font-weight:800;color:var(--azul-700);margin-top:3px}
+.kpi .d{font-size:11.5px;margin-top:2px;font-weight:600}
+.grid-2{display:grid;grid-template-columns:1.55fr 1fr;gap:15px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.sec{font-size:14.5px;font-weight:800;color:var(--azul-700);margin:0 0 11px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--gris-50);color:var(--gris)}
+.badge.ok{background:var(--verde-50);color:var(--verde-600)}.badge.warn{background:var(--naranja-50);color:var(--naranja)}.badge.bad{background:var(--rojo-50);color:var(--rojo)}.badge.info{background:var(--azul-info-50);color:var(--azul-info)}
+.alert{border-radius:11px;padding:12px 13px;font-size:12.8px;border:1px solid var(--linea);margin-bottom:8px}
+.alert.y{background:var(--naranja-50);border-color:#ffe0b2}.alert.b{background:var(--azul-info-50);border-color:#bbdefb}.alert.g{background:var(--verde-50);border-color:var(--verde-100)}.alert.r{background:var(--rojo-50);border-color:#ffcdd2}.alert.p{background:#f3e5f5;border-color:#e1bee7}
+.alert b{color:var(--azul-700)}
+.rule{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--linea);font-size:12.3px}
+.rule:last-child{border-bottom:0}
+.rule .ic{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;flex:none;color:#fff}
+.ic.ok{background:var(--verde)}.ic.warn{background:var(--naranja)}.ic.bad{background:var(--rojo)}.ic.info{background:var(--azul-info)}
+
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{text-align:left;color:var(--gris);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding:10px 12px;border-bottom:1px solid var(--linea);background:var(--gris-50)}
+td{padding:11px 12px;border-bottom:1px solid var(--linea);vertical-align:middle}
+tr:hover td{background:#fafbfd}
+.num{text-align:right}.monto{font-weight:700;color:var(--azul-700)}
+.tbl{overflow-x:auto}
+
+.kanban{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;overflow-x:auto;align-items:start;padding-bottom:6px}
+.kcol{background:#fff;border:1px solid var(--linea);border-radius:11px;min-width:188px;display:flex;flex-direction:column}
+.kcol-head{padding:10px 12px;font-weight:700;font-size:12.3px;color:var(--azul-700);border-bottom:1px solid var(--linea);display:flex;justify-content:space-between}
+.kcol-body{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:60px}
+.kcard{border:1px solid var(--linea);border-radius:9px;padding:10px;box-shadow:0 2px 5px rgba(15,47,71,.05);cursor:pointer;border-left:4px solid var(--linea)}
+.kcard.hot{border-left-color:var(--rojo)}.kcard.warm{border-left-color:var(--naranja)}.kcard.cool{border-left-color:var(--verde)}
+.kcard .t{font-weight:700;font-size:12.5px;color:var(--azul-700)}.kcard .m{font-size:11px;color:var(--gris);margin:2px 0 5px}.kcard .amt{font-weight:700;color:var(--verde-600);font-size:12.8px}
+
+.steps{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.step{flex:1;min-width:104px;display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:9px;background:#fff;border:1px solid var(--linea);font-size:11.8px;font-weight:600;color:var(--gris);white-space:nowrap}
+.step .n{width:21px;height:21px;border-radius:50%;background:var(--gris-50);color:var(--gris);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;flex-shrink:0}
+.step.on{border-color:var(--azul);color:var(--azul-700)}.step.on .n{background:var(--azul);color:#fff}
+.step.done{border-color:var(--verde-100);color:var(--verde-600);background:var(--verde-50)}.step.done .n{background:var(--verde);color:#fff}
+.wizard{display:grid;grid-template-columns:1fr 292px;gap:15px;align-items:start}
+.wiz-body{padding:19px}
+.panel-step{display:none}.panel-step.on{display:block;animation:fade .22s}
+.panel-step h2{font-size:15.5px;font-weight:800;color:var(--azul-700);margin-bottom:2px}
+.hint{color:var(--gris);font-size:12.3px;margin-bottom:14px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--azul-700);margin-bottom:4px}
+.field input,.field select{width:100%;border:1px solid var(--linea);border-radius:8px;padding:8px 10px;font-size:13px;outline:0;background:#fff}
+.field input:focus,.field select:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(31,78,121,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.area-box{background:var(--gris-50);border:1px solid var(--linea);border-radius:9px;padding:11px;font-size:12px}
+.area-box .big{font-size:19px;font-weight:800;color:var(--azul-700)}
+.opt{border:2px solid var(--linea);border-radius:13px;padding:14px;position:relative;background:#fff;margin-bottom:11px}
+.opt.sel{border-color:var(--verde)}
+.opt .reco{position:absolute;top:-9px;left:11px;background:var(--verde);color:#fff;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:5px;text-transform:uppercase}
+.opt h3{font-size:14.5px;color:var(--azul-700);margin:2px 0 5px}
+.opt .price{font-size:23px;font-weight:800;color:var(--azul-700)}
+.opt .price small{font-size:11.5px;color:var(--gris);font-weight:500}
+.opt dl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:12px;margin-top:7px}
+.opt dt{color:var(--gris)}.opt dd{margin:0;text-align:right;font-weight:600}
+.semaforo{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:19px}
+.semaforo::before{content:"";width:11px;height:11px;border-radius:50%;background:currentColor}
+.semaforo.ok{color:var(--verde)}.semaforo.warn{color:var(--naranja)}.semaforo.bad{color:var(--rojo)}
+.summary{position:sticky;top:72px}
+.sumline{display:flex;justify-content:space-between;font-size:12.7px;padding:5.5px 0;color:var(--gris)}
+.sumline b{color:var(--texto)}
+.sumline.total{font-size:14.5px;font-weight:800;color:var(--azul-700);border-top:1px solid var(--linea);margin-top:4px;padding-top:10px}
+.sumline.total b{color:var(--verde-600);font-size:18px}
+.wiz-foot{display:flex;justify-content:space-between;align-items:center;padding:14px 19px;border-top:1px solid var(--linea)}
+
+.tabs{display:flex;gap:6px;margin-bottom:15px;flex-wrap:wrap}
+.tab{border:1px solid var(--linea);background:#fff;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--gris)}
+.tab.on{background:var(--azul-700);color:#fff;border-color:var(--azul-700)}
+.drop{border:2px dashed var(--azul-100);border-radius:11px;padding:26px 16px;text-align:center;background:var(--azul-50);color:var(--gris);cursor:pointer}
+.drop .big{font-size:32px}
+.flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:600}
+.flow span{background:var(--gris-50);border:1px solid var(--linea);border-radius:8px;padding:7px 11px;color:var(--azul-700)}
+.flow i{color:var(--gris);font-style:normal}
+.agent{display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid var(--linea);border-radius:10px;background:var(--gris-50);margin-bottom:8px}
+.agent .ic{font-size:19px}.agent .t{flex:1;font-size:12.8px}.agent .t b{color:var(--azul-700)}
+.switch{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--azul-700)}
+.switch input{accent-color:var(--verde);width:16px;height:16px}
+
+.modal{position:fixed;inset:0;background:rgba(15,47,71,.6);z-index:80;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px)}
+.modal.on{display:flex}
+.modal-box{background:#fff;border-radius:16px;width:min(720px,100%);max-height:90vh;overflow:auto;box-shadow:0 18px 60px rgba(15,47,71,.3)}
+.modal-head{padding:15px 20px;border-bottom:1px solid var(--linea);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff}
+.modal-body{padding:20px}
+.onb{display:flex;gap:12px;align-items:flex-start;padding:13px;border:1px solid var(--linea);border-radius:11px;margin-bottom:10px}
+.onb .n{width:28px;height:28px;border-radius:50%;background:var(--verde);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.onb h4{font-size:13.5px;color:var(--azul-700)}.onb p{font-size:12px;color:var(--gris)}
+
+.fab{position:fixed;bottom:20px;right:20px;z-index:60;border:0;border-radius:50%;width:52px;height:52px;font-size:22px;color:#fff;background:linear-gradient(135deg,#43a047,#1f5c23);box-shadow:0 10px 26px rgba(46,125,50,.4)}
+.assistant{position:fixed;bottom:80px;right:20px;z-index:61;width:360px;max-width:calc(100vw-30px);height:450px;max-height:calc(100vh-110px);background:#fff;border-radius:15px;box-shadow:0 18px 60px rgba(15,47,71,.3);border:1px solid var(--linea);display:none;flex-direction:column;overflow:hidden}
+.assistant.on{display:flex}
+.as-head{background:linear-gradient(135deg,var(--azul),var(--azul-600));color:#fff;padding:12px 15px;display:flex;align-items:center;gap:9px}
+.as-head .t{font-weight:700;font-size:13.5px}.as-head .s{font-size:10.5px;opacity:.85}
+.as-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--gris-50)}
+.msg{max-width:84%;padding:9px 12px;border-radius:11px;font-size:12.5px;line-height:1.4}
+.msg.bot{background:#fff;border:1px solid var(--linea);align-self:flex-start}.msg.user{background:linear-gradient(135deg,var(--verde),var(--verde-600));color:#fff;align-self:flex-end}
+.as-foot{display:flex;gap:7px;padding:10px;border-top:1px solid var(--linea)}
+.as-foot input{flex:1;border:1px solid var(--linea);border-radius:20px;padding:8px 13px;font-size:12.8px;outline:0}
+.as-foot button{border:0;width:36px;height:36px;border-radius:50%;background:var(--verde);color:#fff;font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--azul-700);color:#fff;padding:11px 18px;border-radius:999px;font-weight:600;font-size:12.8px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:99;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr 1fr}.grid-4{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:repeat(3,1fr)}.wizard{grid-template-columns:1fr}.summary{position:static}.cmd .hint{display:none}}
+@media(max-width:760px){.sidebar{position:fixed;left:-250px;transition:.25s;z-index:70}.sidebar.open{left:0}.topbar .burger{display:block}.kpis{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr}.row2,.row3,.row4{grid-template-columns:1fr}.kanban{grid-template-columns:repeat(2,1fr)}.seg .hide-m{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo"><div class="mark">I</div><div><div class="name">IMPERTODO AI OS</div><div class="sub">PROSEALMASTER · MVP Final</div></div></div></div>
+    <nav class="nav">
+      <div class="grp">Diario</div>
+      <button class="on" data-v="hoy"><span class="ic">📊</span>Hoy</button>
+      <div class="grp">Vender</div>
+      <button data-v="cotizar"><span class="ic">🧠</span>Cotizar</button>
+      <button data-v="clientes"><span class="ic">👥</span>Clientes & Techos</button>
+      <button data-v="propuesta"><span class="ic">📱</span>Propuesta viva</button>
+      <button data-v="captacion"><span class="ic">📣</span>Marketing / Captación</button>
+      <div class="grp">Operar</div>
+      <button data-v="obra"><span class="ic">🏗️</span>Obra / OT</button>
+      <button data-v="inventario"><span class="ic">📦</span>Inventario</button>
+      <div class="grp">Dinero</div>
+      <button data-v="caja"><span class="ic">🧾</span>Caja / Contabilidad</button>
+      <button data-v="cobrar"><span class="ic">💵</span>Cobrar</button>
+      <button data-v="aprobaciones"><span class="ic">✅</span>Aprobaciones <span class="badge">3</span></button>
+      <div class="grp">Crecer</div>
+      <button data-v="licitaciones"><span class="ic">🏛️</span>Licitaciones</button>
+      <button data-v="franquicias"><span class="ic">🌐</span>Franquicias</button>
+      <div class="grp">Control</div>
+      <button data-v="catalogo"><span class="ic">⚙️</span>Catálogo / Precios</button>
+      <button data-v="agentes"><span class="ic">🤖</span>Agentes IA</button>
+    </nav>
+    <div class="sidefoot">v3 final · datos de ejemplo salvo [DATO JAMES] · se guarda en este navegador</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="cmd"><input id="cmd" placeholder='Escribe o dicta: "cotiza 300 m² acrílico para OXXO" · "cuánto debe LALA" · "agenda visita viernes"' onkeydown="if(event.key==='Enter')runCmd()"><button title="Dictar por voz" onclick="toast('Dictado por voz: disponible al conectar el micrófono')">🎙</button></div>
+      <div class="seg"><select id="tenant" onchange="toast('Vista ProSealMaster: marca azul, sin márgenes de central')"><option>Impertodo Torreón</option><option>ProSealMaster</option></select></div>
+      <div class="seg"><select id="role" onchange="setRole(this.value)"><option value="gerencia">Gerencia</option><option value="admin">Administración</option><option value="supervisor">Supervisor</option><option value="contador">Contador</option></select></div>
+      <button class="btn sm" onclick="openOnboarding()">🎓 Ayuda</button>
+    </header>
+
+    <div class="content">
+
+      <!-- ================= HOY ================= -->
+      <section class="view on" id="v-hoy">
+        <div class="head"><div><div class="eyebrow">Centro operativo</div><h1>Buenos días, Gerencia 👋</h1><div class="sub">Lo que mueve dinero hoy, con la IA priorizando y tú decidiendo.</div></div>
+        <div class="actions"><button class="btn primary" onclick="go('cotizar')">➕ Cotizar obra</button><button class="btn" onclick="runAiReview()">🤖 Revisión IA</button></div></div>
+        <div class="kpis">
+          <div class="card kpi"><div class="lbl">Pipeline abierto</div><div class="val">$1.86M</div><div class="d" style="color:var(--naranja)">ponderado $0.93M</div></div>
+          <div class="card kpi"><div class="lbl">Margen actual</div><div class="val">31%</div><div class="d" style="color:var(--rojo)">piso 30% · 2 debajo</div></div>
+          <div class="card kpi"><div class="lbl">Comprobantes</div><div class="val">5</div><div class="d" style="color:var(--azul-info)">por revisar</div></div>
+          <div class="card kpi"><div class="lbl">Por cobrar</div><div class="val">$412K</div><div class="d" style="color:var(--naranja)">3 facturas</div></div>
+          <div class="card kpi"><div class="lbl">Flujo 30 días</div><div class="val">$412K</div><div class="d" style="color:var(--verde)">caja al día</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card panel"><div class="sec">Atender hoy <span class="badge">IA prioriza · 7 acciones</span></div>
+            <div class="alert y"><b>Consulta Externa Torreón · Isaac Díaz</b> — 2 opciones ($257k/$501k) sin respuesta 17 días. <div style="margin-top:6px"><button class="btn sm primary" onclick="toast('Mensaje de seguimiento redactado: compara $/m²/año')">Seguimiento IA</button> <button class="btn sm wa">WhatsApp</button></div></div>
+            <div class="alert b"><b>Nave Parque Lagunero · 2,400 m²</b> — levantamiento mañana. Ventana seca 5 días. <button class="btn sm">Dron + fotos</button></div>
+            <div class="alert g"><b>Licitación IMSS Coahuila</b> — match 92%, apertura 29-oct. <button class="btn sm" onclick="go('licitaciones')">Ver</button></div>
+            <div class="alert r"><b>Margen bajo piso</b> — PU "Edgar Yáñez" $220/m² queda en 17%. <button class="btn sm" onclick="go('catalogo')">Revisar APU</button></div>
+            <div class="alert p"><b>OXXO Laguna</b> — garantía de 3 sucursales cumple año 1 → mantenimiento programable. <button class="btn sm" onclick="toast('3 visitas agendadas')">Agendar</button></div>
+          </div>
+          <div>
+            <div class="card panel" style="margin-bottom:14px"><div class="sec">Ventana de aplicación · Torreón</div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:10.5px;font-weight:700">
+                <div style="background:var(--verde-50);border-radius:7px;padding:5px">J<b style="display:block;font-size:13px">32°</b>seco</div>
+                <div style="background:var(--verde-50);border-radius:7px;padding:5px">V<b style="display:block;font-size:13px">31°</b>seco</div>
+                <div style="background:var(--verde-50);border-radius:7px;padding:5px">S<b style="display:block;font-size:13px">30°</b>seco</div>
+                <div style="background:var(--naranja-50);border-radius:7px;padding:5px">D<b style="display:block;font-size:13px">27°</b>40%</div>
+                <div style="background:var(--rojo-50);border-radius:7px;padding:5px">L<b style="display:block;font-size:13px">24°</b>80%</div>
+                <div style="background:var(--naranja-50);border-radius:7px;padding:5px">M<b style="display:block;font-size:13px">23°</b>70%</div>
+                <div style="background:var(--verde-50);border-radius:7px;padding:5px">X<b style="display:block;font-size:13px">28°</b>seco</div>
+              </div></div>
+            <div class="card panel"><div class="sec">Reglas de oro</div>
+              <div class="rule"><span class="ic ok">✓</span><div>La IA sugiere, el humano aprueba. Nada se envía, paga ni contabiliza solo.</div></div>
+              <div class="rule"><span class="ic bad">✕</span><div>Cotización sin costo real: <b>bloqueada</b>. Margen bajo piso: requiere autorización.</div></div>
+              <div class="rule"><span class="ic info">i</span><div>El XML CFDI manda sobre la foto. UUID duplicado: alerta y revisión.</div></div>
+              <div class="rule"><span class="ic warn">!</span><div>Obra sin evidencia (foto + fase + m²): no se cierra.</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= COTIZAR ================= -->
+      <section class="view" id="v-cotizar">
+        <div class="head"><div><div class="eyebrow">Cotizador IA · #2026-043</div><h1>Cotizar</h1><div class="sub">Cliente → medición → diagnóstico → dos opciones → precio con margen → propuesta. El resumen se actualiza con cada campo.</div></div>
+        <div class="actions"><button class="btn" onclick="toast('Borrador guardado en este navegador')">Guardar</button><button class="btn primary" onclick="go('propuesta')">Propuesta →</button></div></div>
+        <div class="steps" id="steps">
+          <div class="step on" data-s="1"><span class="n">1</span>Cliente</div>
+          <div class="step" data-s="2"><span class="n">2</span>Medición</div>
+          <div class="step" data-s="3"><span class="n">3</span>Diagnóstico</div>
+          <div class="step" data-s="4"><span class="n">4</span>Opciones</div>
+          <div class="step" data-s="5"><span class="n">5</span>Precio y envío</div>
+        </div>
+        <div class="wizard">
+          <div class="card wiz-body">
+            <div class="panel-step on" data-p="1">
+              <h2>Cliente y obra</h2><div class="hint">La IA conoce a esta cuenta: 2 cotizaciones previas sin cerrar, objeción probable precio.</div>
+              <div class="row2">
+                <div class="field"><label>Cliente / empresa</label><input value="Unidad de Consulta Externa Torreón"></div>
+                <div class="field"><label>Contacto</label><input value="Ing. Isaac Díaz"></div>
+                <div class="field"><label>WhatsApp</label><input value="871 710 1254"></div>
+                <div class="field"><label>Sector</label><select><option>Gobierno / Salud</option><option>Industrial</option><option>Comercial</option><option>Residencial</option><option>Minero</option></select></div>
+                <div class="field"><label>Elemento</label><select><option>Losa de azotea no transitable</option><option>Losa transitable</option><option>Nave / lámina</option><option>Cisterna</option></select></div>
+                <div class="field"><label>Factura</label><select><option>CFDI 4.0 + IVA</option><option>No requiere</option></select></div>
+              </div>
+            </div>
+            <div class="panel-step" data-p="2">
+              <h2>Medición y área desarrollada</h2><div class="hint">El área desarrollada suma pretiles, chaflanes, bajantes, domos y ductos: hasta 15% que se dejan de cobrar.</div>
+              <div class="row3">
+                <div class="field"><label>Área en planta (m²)</label><input id="mPlanta" type="number" value="1314.18" oninput="calc()"></div>
+                <div class="field"><label>Perímetro pretil (m)</label><input id="mPer" type="number" value="152" oninput="calc()"></div>
+                <div class="field"><label>Altura pretil (m)</label><input id="mAlt" type="number" step="0.05" value="0.40" oninput="calc()"></div>
+                <div class="field"><label>Bajantes</label><input id="mBaj" type="number" value="4" oninput="calc()"></div>
+                <div class="field"><label>Domos</label><input id="mDom" type="number" value="1" oninput="calc()"></div>
+                <div class="field"><label>Ductos (m)</label><input id="mDuc" type="number" value="6" oninput="calc()"></div>
+              </div>
+              <div class="area-box"><div class="big" id="areaDev">—</div><span id="areaNote">Área desarrollada = planta + pretiles + chaflanes + bajantes + domos + ductos</span></div>
+              <div class="alert b" style="margin-top:11px">Pre-cotiza sin visita; la propuesta lleva <b>"a reserva de verificar área"</b> hasta confirmar en sitio.</div>
+            </div>
+            <div class="panel-step" data-p="3">
+              <h2>Diagnóstico de daños por IA</h2><div class="hint">El diagnóstico define partidas previas y sistema recomendado. Nunca bloquea: puedes seguir sin él.</div>
+              <button class="btn azul" onclick="diag()">🔬 Analizar fotos con IA</button>
+              <div id="diagOut" style="margin-top:11px"><div class="alert" style="color:var(--gris)">Pulsa "Analizar". El diagnóstico llega solo y propone partidas previas.</div></div>
+            </div>
+            <div class="panel-step" data-p="4">
+              <h2>Dos opciones: lo que pidió y lo que necesita</h2><div class="hint">Ambas con costo por m² por año para vencer la objeción de precio.</div>
+              <div id="optGrid"></div>
+            </div>
+            <div class="panel-step" data-p="5">
+              <h2>Precio, margen y validación</h2>
+              <div class="row3">
+                <div class="field"><label>Modo de precio</label><select id="pMode" onchange="calc()"><option value="promo">Promoción</option><option value="lista">Lista</option><option value="manual">Manual</option><option value="margen">Desde margen objetivo</option></select></div>
+                <div class="field"><label>Margen objetivo (%)</label><input id="pMargin" type="number" value="32" oninput="calc()"></div>
+                <div class="field"><label>Descuento (%)</label><input id="pDisc" type="number" value="0" oninput="calc()"></div>
+              </div>
+              <div class="switch" style="margin-bottom:12px"><input type="checkbox" id="apuToggle" onchange="calc()"> Ver APU y costos detallados (administración)</div>
+              <div class="tbl" id="apuWrap" style="display:none"><table id="apuTbl"></table></div>
+              <div class="sec" style="margin:13px 0 5px">Validador anti-error</div>
+              <div id="checks"></div>
+            </div>
+            <div class="wiz-foot">
+              <button class="btn" id="btnBack" onclick="goStep(-1)" disabled>← Atrás</button>
+              <div style="display:flex;gap:8px"><button class="btn" id="btnNext" onclick="goStep(1)">Siguiente →</button>
+              <button class="btn wa" id="btnProp" style="display:none" onclick="go('propuesta')">📱 Propuesta viva</button></div>
+            </div>
+          </div>
+          <div class="summary"><div class="card panel">
+            <div class="sec">Resumen en vivo</div>
+            <div class="sumline"><span>Área facturable</span><b id="sArea">—</b></div>
+            <div class="sumline"><span>Sistema</span><b id="sSistema">—</b></div>
+            <div class="sumline"><span>Precio final /m²</span><b id="sUnit">—</b></div>
+            <div class="sumline"><span>Subtotal</span><b id="sSub">—</b></div>
+            <div class="sumline"><span>IVA 16%</span><b id="sIva">—</b></div>
+            <div class="sumline total"><span>TOTAL</span><b id="sTotal">—</b></div>
+            <div id="sMargen" style="margin-top:9px"></div>
+            <div id="sEstado" style="margin-top:8px"></div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- ================= CLIENTES ================= -->
+      <section class="view" id="v-clientes">
+        <div class="head"><div><div class="eyebrow">Cuentas y activos</div><h1>Cada techo es un activo</h1><div class="sub">Historial, garantía y próxima renovación por techo → ingresos recurrentes sin volver a prospectar.</div></div>
+        <button class="btn primary" onclick="toast('Prospecto creado (20 segundos)')">+ Prospecto</button></div>
+        <div class="kanban" id="kanban"></div>
+        <div class="card tbl" style="margin-top:15px"><table>
+          <tr><th>Cuenta</th><th>Sector</th><th class="num">Activos</th><th class="num">m² garantía</th><th>Próxima acción</th></tr>
+          <tr><td><b>Consulta Externa Torreón</b></td><td>Gobierno/Salud</td><td class="num">1</td><td class="num">0</td><td><span class="badge warn">Cotizado</span></td></tr>
+          <tr><td><b>OXXO Región Laguna</b></td><td>Comercial</td><td class="num">12</td><td class="num">3,420</td><td><span class="badge ok">Mant. nov</span></td></tr>
+          <tr><td><b>IMSS HGZ 16</b></td><td>Gobierno</td><td class="num">4</td><td class="num">5,800</td><td><span class="badge info">Licitación</span></td></tr>
+          <tr><td><b>LALA Planta</b></td><td>Industrial</td><td class="num">6</td><td class="num">9,150</td><td><span class="badge ok">Garantía 2029</span></td></tr>
+        </table></div>
+      </section>
+
+      <!-- ================= PROPUESTA ================= -->
+      <section class="view" id="v-propuesta">
+        <div class="head"><div><div class="eyebrow">Vista del cliente · enlace</div><h1>Propuesta viva</h1><div class="sub">El cliente la abre en su celular, compara opciones, firma y paga anticipo. Cada apertura se registra.</div></div>
+        <button class="btn primary" onclick="toast('Enlace copiado: impertodopro.com/p/2026-043')">Copiar enlace</button></div>
+        <div class="grid-2">
+          <div class="card panel" style="background:#fff"><div class="sec">Vista del cliente</div>
+            <div style="border:1px solid var(--linea);border-radius:12px;padding:15px">
+              <div style="background:var(--azul-700);color:#fff;border-radius:10px;padding:13px;margin-bottom:12px"><div style="font-size:10px;opacity:.8">IMPERTODO · 45 años</div><div style="font-weight:800">Propuesta Consulta Externa Torreón</div></div>
+              <div style="font-size:12px;color:var(--gris);margin-bottom:12px">Detectamos agua estancada al NE y acrílico despegado en ~15% de la losa.</div>
+              <div class="opt sel"><span class="reco">Recomendada</span><h3>Rollo SBS 4.5 mm</h3><div class="price">$501,543 <small>c/IVA · 10 años garantía</small></div><div style="font-size:11px;color:var(--verde-600)"><b>$31/m²/año</b></div></div>
+              <div class="opt"><h3>Acrílico 10 años</h3><div class="price">$257,631 <small>c/IVA · 5 años garantía</small></div><div style="font-size:11px;color:var(--gris)">$35/m²/año</div></div>
+              <div style="display:flex;gap:8px;border-top:1px solid var(--linea);padding-top:11px"><span class="badge ok">Anticipo 70%</span><button class="btn azul sm">Aprobar y pagar</button></div>
+            </div></div>
+          <div class="card panel"><div class="sec">Lo que ve Impertodo</div>
+            <div class="alert g">Abierta 3 veces · 4 min en la opción recomendada</div>
+            <div class="alert b">Preguntó "¿incluye retirar lo anterior?" → IA respondió con la partida 2</div>
+            <div class="alert y">Reenviada a dirección → probabilidad 50% → 68%</div></div>
+        </div>
+      </section>
+
+      <!-- ================= CAPTACIÓN ================= -->
+      <section class="view" id="v-captacion">
+        <div class="head"><div><div class="eyebrow">Marketing y entradas al embudo</div><h1>Captación</h1><div class="sub">Estimador web, WhatsApp con IA y radar de techos. De "solo referidos" a motor comercial.</div></div></div>
+        <div class="grid-3">
+          <div class="card panel"><div class="sec">Instant Estimator</div><div style="font-size:12px;color:var(--gris)">impertodopro.com/cotiza</div>
+            <div class="field" style="margin-top:9px"><label>m²</label><input type="number" value="250"></div>
+            <button class="btn primary btn-sm" onclick="toast('Rango $42,250–$97,500 · lead creado')">Ver estimado</button></div>
+          <div class="card panel"><div class="sec">WhatsApp con IA</div><div style="font-size:12px;color:var(--gris)">Responde 24/7, pide fotos, pre-cotiza y agenda. Escala al supervisor fuera de guion.</div>
+            <div class="alert g" style="margin-top:9px">"Listo ✅ viernes 9:00. El supervisor confirma medidas y te manda propuesta el mismo día."</div></div>
+          <div class="card panel"><div class="sec">Radar de techos</div>
+            <div class="alert" style="margin-top:9px">🏭 Nave logística Lagunero · 6,800 m² · <b>score 94</b></div>
+            <div class="alert">🏬 Plaza Blvd. Independencia · 3,200 m² · <b>score 88</b></div>
+            <div class="alert">🏫 Secundaria SEP · 2,100 m² · <b>score 76</b></div></div>
+        </div>
+        <div class="card tbl" style="margin-top:14px"><div class="sec" style="padding:14px 14px 0">Licitaciones detectadas <span class="badge">CompraNet + estados</span></div>
+          <table><tr><th>Convocante</th><th>Objeto</th><th>Apertura</th><th>Match</th><th></th></tr>
+          <tr><td><b>IMSS Coahuila</b></td><td>Mant. impermeabilización HGZ 16</td><td>29-oct</td><td><span class="badge ok">92%</span></td><td><button class="btn sm">Pre-llenar</button></td></tr>
+          <tr><td><b>Coahuila SEDU</b></td><td>Techumbres 6 planteles</td><td>4-nov</td><td><span class="badge warn">85%</span></td><td><button class="btn sm">Pre-llenar</button></td></tr>
+        </table></div>
+      </section>
+
+      <!-- ================= OBRA ================= -->
+      <section class="view" id="v-obra">
+        <div class="head"><div><div class="eyebrow">Ejecución</div><h1>Obra / Órdenes de Trabajo</h1><div class="sub">Regla de 60 segundos: foto + fase + m² y listo. Funciona sin señal y sincroniza después.</div></div></div>
+        <div class="card tbl" style="margin-bottom:14px"><table>
+          <tr><th>OT</th><th>Obra</th><th>Sistema</th><th>Avance</th><th>Consumo teórico vs real</th><th>Estado</th></tr>
+          <tr><td><b>OT-088</b></td><td>OXXO Torreón Centro</td><td>Acrílico</td><td>72%</td><td>412 / 418 cubetas · +1.5%</td><td><span class="badge ok">En tiempo</span></td></tr>
+          <tr><td><b>OT-089</b></td><td>Nave Parque Lagunero</td><td>SBS 4.5mm</td><td>28%</td><td>1,430 / 1,505 m² · +5.2%</td><td><span class="badge warn">Revisar merma</span></td></tr>
+          <tr><td><b>OT-090</b></td><td>LALA Planta</td><td>Poliuretano</td><td>12%</td><td>Pendiente surtir primario</td><td><span class="badge bad">Bloqueo inventario</span></td></tr>
+        </table></div>
+        <div class="grid-2">
+          <div class="card panel"><div class="sec">Fases y firma</div>
+            <div class="flow"><span>1 Preparación</span><i>→</i><span>2 Primer</span><i>→</i><span>3 Membrana</span><i>→</i><span>4 Detalles</span><i>→</i><span>5 Entrega</span></div>
+            <div style="margin-top:12px;font-size:12px;color:var(--gris)">Firma del cliente en pantalla al entregar → genera garantía digital y factura.</div>
+            <div style="border:1.5px dashed var(--linea);border-radius:9px;height:90px;margin-top:9px;display:grid;place-items:center;color:var(--gris);font-size:12px;background:#fcfcfd">✍️ Área de firma del cliente</div></div>
+          <div class="card panel"><div class="sec">Calidad IA</div>
+            <div class="alert y">Foto 14: traslape insuficiente en junta → validar con supervisor.</div>
+            <div class="alert g">Foto 16: cobertura correcta en bajante 2.</div></div>
+        </div>
+      </section>
+
+      <!-- ================= INVENTARIO ================= -->
+      <section class="view" id="v-inventario">
+        <div class="head"><div><div class="eyebrow">Almacén</div><h1>Inventario PROSEALMASTER</h1><div class="sub">Descuenta por OT. Mínimos y pedido propuesto por el agente de compras.</div></div>
+        <button class="btn primary" onclick="toast('Orden de compra propuesta creada')">Crear pedido sugerido</button></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="card kpi"><div class="lbl">Valor</div><div class="val">$3.8M</div></div>
+          <div class="card kpi"><div class="lbl">Bajo mínimo</div><div class="val" style="color:var(--rojo)">4</div></div>
+          <div class="card kpi"><div class="lbl">PROSEAL vs nacional</div><div class="val" style="color:var(--verde)">-28%</div></div>
+          <div class="card kpi"><div class="lbl">Merma mensual</div><div class="val">3.4%</div></div>
+        </div>
+        <div class="card tbl"><table>
+          <tr><th>Producto</th><th>Stock</th><th>Mínimo</th><th>Costo</th><th>Proveedor</th><th>Estado</th></tr>
+          <tr><td><b>Acrílico Eco Pro 19L</b></td><td>842</td><td>300</td><td class="monto">$1,120</td><td>PROSEALMASTER</td><td><span class="badge ok">OK</span></td></tr>
+          <tr><td><b>SBS 4.5mm gravilla blanca</b></td><td>310</td><td>200</td><td class="monto">$685</td><td>Vietnam landed</td><td><span class="badge ok">OK</span></td></tr>
+          <tr><td><b>Primario asfáltico</b></td><td>18</td><td>40</td><td class="monto">$2,150</td><td>Nacional</td><td><span class="badge bad">Reordenar</span></td></tr>
+        </table></div>
+      </section>
+
+      <!-- ================= CAJA / CONTABILIDAD ================= -->
+      <section class="view" id="v-caja">
+        <div class="head"><div><div class="eyebrow">Contabilidad sin capturar</div><h1>Caja y contabilidad fácil</h1><div class="sub">La bandeja se llena sola: SAT (e.firma), correo facturas@, foto de tickets y banco. La IA clasifica; tú apruebas.</div></div>
+        <div class="actions"><button class="btn" onclick="ocr()">📷 Foto de ticket</button><button class="btn" onclick="syncMail()">📧 Sincronizar correo</button><button class="btn" onclick="toast('Descarga masiva con python-satcfdi (MIT)')">⟳ SAT hoy</button></div></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="card kpi"><div class="lbl">Ingresos registrados</div><div class="val">$806K</div></div>
+          <div class="card kpi"><div class="lbl">Egresos aprobados</div><div class="val">$394K</div></div>
+          <div class="card kpi"><div class="lbl">IVA por pagar</div><div class="val" style="color:var(--azul-700)">$41,646</div></div>
+          <div class="card kpi"><div class="lbl">Flujo de caja</div><div class="val" style="color:var(--verde)">$412K</div></div>
+        </div>
+        <div class="tabs">
+          <button class="tab on" onclick="tabCaja('bandeja',this)">Bandeja</button>
+          <button class="tab" onclick="tabCaja('captura',this)">Captura rápida</button>
+          <button class="tab" onclick="tabCaja('libro',this)">Libro</button>
+          <button class="tab" onclick="tabCaja('utilidad',this)">Utilidad por obra</button>
+        </div>
+        <div id="c-bandeja"><div class="card tbl"><table>
+          <tr><th>Fecha</th><th>Proveedor</th><th>Fuente</th><th>Obra</th><th class="num">Total</th><th class="num">IVA</th><th>Estado</th><th></th></tr>
+          <tr><td>18-oct</td><td><b>Chovatek México</b></td><td>Correo XML</td><td>OT-089</td><td class="num monto">$96,320</td><td class="num">$13,284</td><td><span class="badge warn">Por revisar</span></td><td><button class="btn sm primary" onclick="toast('Comprobante aprobado → pasa a gerencia')">Aprobar</button></td></tr>
+          <tr><td>15-oct</td><td><b>Transportes Laguna</b></td><td>Correo XML</td><td>OT-089</td><td class="num monto">$12,400</td><td class="num">$1,710</td><td><span class="badge warn">Por revisar</span></td><td><button class="btn sm primary" onclick="toast('Aprobado')">Aprobar</button></td></tr>
+          <tr><td>14-oct</td><td><b>Refaccionaria Industrial</b></td><td>Foto OCR</td><td>—</td><td class="num monto">$18,450</td><td class="num">$2,545</td><td><span class="badge info">Draft IA</span></td><td><button class="btn sm">Revisar</button></td></tr>
+          <tr><td>12-oct</td><td><b>Valmex</b></td><td>Correo XML</td><td>OT-088</td><td class="num monto">$58,700</td><td class="num">$8,096</td><td><span class="badge ok">Aprobado</span></td><td></td></tr>
+        </table></div>
+        <div class="flow" style="margin-top:12px"><span>Foto / XML / correo</span><i>→</i><span>Borrador</span><i>→</i><span>Revisión admin</span><i>→</i><span>Gerencia</span><i>→</i><span>ERP fiscal</span></div></div>
+        <div id="c-captura" style="display:none"><div class="grid-2">
+          <div class="card panel"><div class="sec">Sube la factura</div><div class="drop" onclick="ocr()"><div class="big">📷</div><b>Fotografiar factura / ticket</b><div style="font-size:11.5px">La IA extrae proveedor, RFC, fecha, monto e IVA; tú confirmas</div></div>
+            <div id="ocrOut" style="display:none;margin-top:12px;border:1px solid var(--verde-100);border-radius:11px;padding:14px;background:var(--verde-50)">
+              <div class="row2"><div class="field"><label>Proveedor</label><input value="Refaccionaria Industrial del Norte"></div><div class="field"><label>Monto</label><input value="$18,450.00"></div></div>
+              <div class="row2"><div class="field"><label>IVA</label><input value="$2,545.20"></div><div class="field"><label>Categoría (IA)</label><select><option>Material / herramientas</option><option>Gasto de obra</option><option>Vehículos</option></select></div></div>
+              <button class="btn primary" onclick="toast('Draft publicado en bandeja → revisión admin')">✓ Confirmar y enviar a revisión</button></div>
+          </div>
+          <div class="card panel"><div class="sec">Cómo funciona</div>
+            <div class="agent"><span class="ic">📷</span><div class="t"><b>Foto</b> — OCR extrae y tú confirmas.</div></div>
+            <div class="agent"><span class="ic">📧</span><div class="t"><b>Correo</b> — agente lee CFDI (XML) y deduplica por UUID.</div></div>
+            <div class="agent"><span class="ic">🏛️</span><div class="t"><b>SAT</b> — descarga emitidos/recibidos con e.firma.</div></div>
+            <div class="agent"><span class="ic">🤖</span><div class="t"><b>IA</b> — clasifica y aprende. <b>Nunca contabiliza ni paga sola.</b></div></div></div>
+        </div></div>
+        <div id="c-libro" style="display:none"><div class="card tbl"><table>
+          <tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th class="num">Ingreso</th><th class="num">Egreso</th><th>Origen</th></tr>
+          <tr><td>18-oct</td><td>Anticipo OXXO (OT-088)</td><td>Venta</td><td class="num monto">$208,600</td><td class="num"></td><td><span class="badge ok">CFDI</span></td></tr>
+          <tr><td>18-oct</td><td>Chovatek México</td><td>Material</td><td class="num"></td><td class="num">$96,320</td><td><span class="badge info">Correo</span></td></tr>
+          <tr><td>16-oct</td><td>Nómina cuadrilla</td><td>Nómina</td><td class="num"></td><td class="num">$42,000</td><td><span class="badge">Manual</span></td></tr>
+          <tr><td>15-oct</td><td>Anticipo LALA (SBS)</td><td>Venta</td><td class="num monto">$598,000</td><td class="num"></td><td><span class="badge ok">CFDI</span></td></tr>
+        </table></div></div>
+        <div id="c-utilidad" style="display:none"><div class="card tbl"><table>
+          <tr><th>Obra</th><th class="num">Ingresos</th><th class="num">Egresos aprobados</th><th class="num">Utilidad real</th><th>vs cotizada</th></tr>
+          <tr><td><b>OT-088 OXXO</b></td><td class="num">$208,600</td><td class="num">$152,300</td><td class="num monto">$56,300</td><td><span class="badge ok">+2 pts</span></td></tr>
+          <tr><td><b>OT-089 Nave Lagunero</b></td><td class="num">$598,000</td><td class="num">$389,100</td><td class="num monto">$208,900</td><td><span class="badge warn">-1 pt</span></td></tr>
+        </table></div></div>
+      </section>
+
+      <!-- ================= COBRAR ================= -->
+      <section class="view" id="v-cobrar">
+        <div class="head"><div><div class="eyebrow">Caja</div><h1>Cobrar</h1><div class="sub">Quién debe, desde cuándo y un botón para recordar por WhatsApp.</div></div></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="card kpi"><div class="lbl">Por cobrar</div><div class="val">$412K</div></div>
+          <div class="card kpi"><div class="lbl">Vencido</div><div class="val" style="color:var(--rojo)">$96K</div></div>
+          <div class="card kpi"><div class="lbl">DSO</div><div class="val">34 días</div></div>
+          <div class="card kpi"><div class="lbl">Recuperable</div><div class="val" style="color:var(--verde)">$316K</div></div>
+        </div>
+        <div class="card tbl"><table>
+          <tr><th>Cliente</th><th>Factura</th><th class="num">Monto</th><th>Vence</th><th>Días</th><th></th></tr>
+          <tr><td><b>Grupo LALA</b></td><td>F-2210</td><td class="num monto">$260,000</td><td>10-nov</td><td>—</td><td><button class="btn sm wa">Recordar WhatsApp</button></td></tr>
+          <tr><td><b>Hospital IMSS</b></td><td>F-2204</td><td class="num monto">$96,000</td><td>12-oct</td><td><span class="badge bad">8 días</span></td><td><button class="btn sm wa">Recordar WhatsApp</button></td></tr>
+          <tr><td><b>Santander</b></td><td>F-2198</td><td class="num monto">$56,000</td><td>20-nov</td><td>—</td><td><button class="btn sm">Recordar</button></td></tr>
+        </table></div>
+      </section>
+
+      <!-- ================= APROBACIONES ================= -->
+      <section class="view" id="v-aprobaciones">
+        <div class="head"><div><div class="eyebrow">Gerencia + administración</div><h1>Aprobaciones</h1><div class="sub">Una captura, dos revisiones. Administración verifica; gerencia autoriza; el contador registra en el ERP.</div></div></div>
+        <div class="flow" style="margin-bottom:15px"><span>Empleado carga</span><i>→</i><span>Administración revisa</span><i>→</i><span>Gerencia autoriza</span><i>→</i><span>Contador registra en ERP</span></div>
+        <div class="grid-2">
+          <div class="card panel"><div class="sec">Cotizaciones pendientes <span class="badge">1</span></div>
+            <div class="alert y"><b>#2026-043 · Rollo SBS 4.5mm</b> — margen 25% debajo del piso 30%. <div style="margin-top:6px"><button class="btn sm primary" onclick="toast('Autorizado')">Autorizar</button> <button class="btn sm">Rechazar</button></div></div></div>
+          <div class="card panel"><div class="sec">Comprobantes pendientes <span class="badge">2</span></div>
+            <div class="alert b"><b>Chovatek · $96,320</b> — revisado por admin, falta gerencia. <button class="btn sm primary">Autorizar</button></div>
+            <div class="alert"><b>Refaccionaria · $18,450</b> — draft IA, falta admin. <button class="btn sm">Revisar</button></div></div>
+        </div>
+      </section>
+
+      <!-- ================= LICITACIONES ================= -->
+      <section class="view" id="v-licitaciones">
+        <div class="head"><div><div class="eyebrow">CompraNet + estados</div><h1>Licitaciones</h1><div class="sub">El agente vigila portales y puntúa coincidencia con experiencia y certificaciones.</div></div></div>
+        <div class="card tbl"><table>
+          <tr><th>Convocante</th><th>Objeto</th><th>Apertura</th><th>Match</th><th></th></tr>
+          <tr><td><b>IMSS OOAD Coahuila</b></td><td>Mant. impermeabilización HGZ 16 y UMF 79</td><td>29-oct</td><td><span class="badge ok">92%</span></td><td><button class="btn sm primary">Pre-llenar expediente</button></td></tr>
+          <tr><td><b>Gob. Coahuila SEDU</b></td><td>Rehabilitación techumbres 6 planteles</td><td>4-nov</td><td><span class="badge warn">85%</span></td><td><button class="btn sm">Ver requisitos</button></td></tr>
+          <tr><td><b>Municipio Torreón</b></td><td>Impermeabilización mercado Alianza</td><td>7-nov</td><td><span class="badge warn">80%</span></td><td><button class="btn sm">Ver requisitos</button></td></tr>
+        </table></div>
+      </section>
+
+      <!-- ================= FRANQUICIAS ================= -->
+      <section class="view" id="v-franquicias">
+        <div class="head"><div><div class="eyebrow">Red</div><h1>Franquicias y marca blanca</h1><div class="sub">Cada unidad opera su instancia; la central ve ventas timbradas, regalías y pedidos de producto.</div></div></div>
+        <div class="grid-3">
+          <div class="card panel"><div style="display:flex;justify-content:space-between"><b>Impertodo Torreón</b><span class="badge ok">Matriz</span></div>
+            <div class="sumline"><span>Cotizaciones mes</span><b>14</b></div><div class="sumline"><span>Margen promedio</span><b>31%</b></div><div class="sumline"><span>Producto vendido</span><b>$845K</b></div></div>
+          <div class="card panel"><div style="display:flex;justify-content:space-between"><b>Monterrey</b><span class="badge warn">Piloto</span></div>
+            <div class="sumline"><span>Cotizaciones mes</span><b>7</b></div><div class="sumline"><span>Regalía estimada</span><b>$18K</b></div></div>
+          <div class="card panel"><div style="display:flex;justify-content:space-between"><b>Querétaro</b><span class="badge info">Prospecto</span></div>
+            <div class="sumline"><span>Inversión estimada</span><b>$650K</b></div><div class="sumline"><span>Factibilidad</span><b>Alta</b></div></div>
+        </div>
+        <div class="card panel" style="margin-top:14px"><div class="sec">Reglas de red</div>
+          <div class="rule"><span class="ic ok">✓</span><div>Regalía 6% + marketing 2% sobre <b>ventas timbradas</b> (no sobre "ganancias").</div></div>
+          <div class="rule"><span class="ic ok">✓</span><div>Fee tecnológico $2,500/mes por unidad.</div></div>
+          <div class="rule"><span class="ic ok">✓</span><div>Compra exclusiva PROSEALMASTER; el franquiciado ve precio de compra, no landed.</div></div>
+          <div class="rule"><span class="ic warn">!</span><div>Franquicia formal solo con COF y marca IMPI (LFPPI 245–250).</div></div></div>
+      </section>
+
+      <!-- ================= CATÁLOGO ================= -->
+      <section class="view" id="v-catalogo">
+        <div class="head"><div><div class="eyebrow">Motor de precios</div><h1>Catálogo y márgenes</h1><div class="sub">La verdad del negocio: material, destajo, merma, indirectos y piso de margen. Todo cotizador hereda estos números.</div></div>
+        <button class="btn primary" onclick="toast('Guardado')">Guardar</button></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="card panel"><label class="field" style="margin:0"><span style="font-size:11px;font-weight:700;color:var(--azul-700)">Piso de margen (%)</span><input id="pFloor" type="number" value="30" oninput="calc()"></label></div>
+          <div class="card panel"><label class="field" style="margin:0"><span style="font-size:11px;font-weight:700;color:var(--azul-700)">Indirectos (%)</span><input id="pInd" type="number" value="8" oninput="calc()"></label></div>
+          <div class="card panel"><label class="field" style="margin:0"><span style="font-size:11px;font-weight:700;color:var(--azul-700)">Proveedor</span><select id="pProv" onchange="calc()"><option value="nac">Marca nacional</option><option value="psm">PROSEALMASTER (-30%)</option></select></label></div>
+        </div>
+        <div class="card tbl"><table id="catTbl"></table></div>
+      </section>
+
+      <!-- ================= AGENTES ================= -->
+      <section class="view" id="v-agentes">
+        <div class="head"><div><div class="eyebrow">Copiloto discreto</div><h1>Agentes de IA</h1><div class="sub">Trabajan detrás de los botones. Se ejecutan con una acción clara y el usuario revisa solo lo importante.</div></div></div>
+        <div class="grid-3">
+          <div class="agent"><span class="ic">📄</span><div class="t"><b>Agente de documentos</b> — lee XML, OCR de fotos, detecta duplicados. <span class="badge warn">No contabiliza</span></div></div>
+          <div class="agent"><span class="ic">💬</span><div class="t"><b>Agente comercial</b> — sugiere seguimiento y objeción. <span class="badge warn">No envía solo</span></div></div>
+          <div class="agent"><span class="ic">🔧</span><div class="t"><b>Agente técnico</b> — valida ficha, espesores, partidas. <span class="badge warn">No autoriza</span></div></div>
+          <div class="agent"><span class="ic">💰</span><div class="t"><b>Agente financiero</b> — detecta margen bajo, duplicados, gastos anómalos. <span class="badge warn">No paga</span></div></div>
+          <div class="agent"><span class="ic">🛒</span><div class="t"><b>Agente de compras</b> — sugiere reposición y compara costo instalado. <span class="badge warn">No compra</span></div></div>
+          <div class="agent"><span class="ic">🏛️</span><div class="t"><b>Agente de licitaciones</b> — vigila CompraNet y puntúa match. <span class="badge warn">No envía</span></div></div>
+        </div>
+        <div class="card panel" style="margin-top:14px"><div class="sec">Bitácora IA / auditoría</div>
+          <div id="aiLog"><div class="rule"><span class="ic info">i</span><div>09:00 · Diagnóstico ejecutado: 4 partidas previas sugeridas.</div></div>
+          <div class="rule"><span class="ic ok">✓</span><div>08:45 · CFDI Chovatek leído y deduplicado por UUID.</div></div>
+          <div class="rule"><span class="ic info">i</span><div>08:30 · Licitación IMSS detectada (match 92%).</div></div></div></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- onboarding -->
+<div class="modal" id="onboarding"><div class="modal-box">
+  <div class="modal-head"><div><span class="badge ok">Capacitación rápida</span><h2 style="margin-top:6px;color:var(--azul-700)">Bienvenido a IMPERTODO AI OS</h2><div style="font-size:12.5px;color:var(--gris);margin-top:3px">Completa, avanzada y simple. Cinco minutos para entenderla.</div></div><button class="btn sm" onclick="closeOnboarding()">Cerrar</button></div>
+  <div class="modal-body">
+    <div class="onb"><span class="n">1</span><div><h4>Cotizar</h4><p>Cliente → medición → diagnóstico → precio con margen → propuesta. El margen se calcula solo.</p></div></div>
+    <div class="onb"><span class="n">2</span><div><h4>Caja</h4><p>Foto, XML o correo se convierten en borradores revisables. La IA clasifica; tú apruebas.</p></div></div>
+    <div class="onb"><span class="n">3</span><div><h4>Obra</h4><p>Regla de 60 segundos: foto + fase + m² y listo. Control con evidencia, no con memoria.</p></div></div>
+    <div class="onb"><span class="n">4</span><div><h4>Catálogo</h4><p>Configura el margen piso y el catálogo maestro. Todo lo demás hereda esos números.</p></div></div>
+    <div class="alert y" style="margin-bottom:0">Regla de oro: <b>la IA sugiere, el humano aprueba</b>. La plataforma no contabiliza, no paga, no timbra y no envía sola.</div>
+  </div>
+</div></div>
+
+<button class="fab" onclick="document.getElementById('assistant').classList.toggle('on')">🤖</button>
+<div class="assistant" id="assistant">
+  <div class="as-head"><div><div class="t">Asistente IA · PROSEALMASTER</div><div class="s">en línea</div></div></div>
+  <div class="as-body" id="asBody"><div class="msg bot">Hola 👋 Puedo cotizar, leer facturas por foto, buscar licitaciones o revisar márgenes. ¿Qué hacemos?</div></div>
+  <div class="as-foot"><input id="asIn" placeholder="Pregunta o escribe una orden…" onkeydown="if(event.key==='Enter')asSend()"><button onclick="asSend()">➤</button></div>
+</div>
+
+<script>
+const FMT=n=>'$'+Math.round(n||0).toLocaleString('es-MX');
+const FMT2=n=>'$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const SYSTEMS={
+  acr7:{name:'Acrílico fibratado 7 años (Valmex)',short:'Acrílico 7 años',list:189,promo:169,warranty:5,life:7,mat:56,labor:30,cons:4,waste:0.10,pago:'60/40'},
+  acr10:{name:'Acrílico fibratado 10 años (Kánuh)',short:'Acrílico 10 años',list:199,promo:169,warranty:5,life:10,mat:60,labor:30,cons:4,waste:0.10,pago:'60/40'},
+  sbs45:{name:'Rollo SBS 4.5mm (Chovatek)',short:'Rollo SBS 4.5mm',list:390,promo:329,warranty:10,life:12,mat:150,labor:45,cons:14,waste:0.12,pago:'70/30'},
+  pu:{name:'Poliuretano espreado ¾–1"',short:'Poliuretano',list:240,promo:220,warranty:2.5,life:8,mat:110,labor:40,cons:8,waste:0.08,pago:'60/40'},
+  polu:{name:'Poliurea por aspersión',short:'Poliurea',list:690,promo:620,warranty:10,life:15,mat:320,labor:90,cons:20,waste:0.08,pago:'70/30'},
+};
+const EXTRAS=[{c:'Retiro de acrílico ampollado (~15%)',u:'m²',q:197,pu:28,on:true},{c:'Resane de fisuras en pretil',u:'ml',q:38,pu:65,on:true},{c:'Corrección de pendiente zona NE',u:'m²',q:45,pu:120,on:true},{c:'Refuerzo de bajantes y domo',u:'pza',q:5,pu:380,on:true}];
+const PIPE=[
+ {col:'Prospecto',items:[{t:'Nave Parque Industrial Lagunero',m:'6,800 m² · Radar',amt:'$1.9M',k:'cool'},{t:'Escuela SEP Coahuila',m:'2,100 m² · Radar',amt:'$390K',k:'cool'}]},
+ {col:'Levantamiento',items:[{t:'Consulta Externa Torreón',m:'1,314 m² · satélite',amt:'$257–501K',k:'warm'}]},
+ {col:'Cotizado',items:[{t:'IMSS HGZ 16',m:'5,800 m² · licitación',amt:'$1.1M',k:'warm'},{t:'Santander',m:'1,120 m²',amt:'$214K',k:'cool'}]},
+ {col:'Negociación',items:[{t:'Grupo LALA',m:'2,400 m² SBS',amt:'$684K',k:'warm'},{t:'Hotel Periférico',m:'1,900 m²',amt:'$372K',k:'cool'}]},
+ {col:'Ganado',items:[{t:'OXXO FEMSA',m:'640 m² epóxico',amt:'$298K',k:'cool'},{t:'Altozano casa club',m:'1,100 m² SBS',amt:'$420K',k:'cool'}]},
+ {col:'Perdido',items:[{t:'Edgar Yáñez PU',m:'78 m² · margen 17%',amt:'$17K',k:'hot'}]},
+];
+let state={step:1,optA:'acr10',optB:'sbs45',sel:'B',ind:8,floor:30,role:'gerencia'};
+let tt;function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>t.remove(),2600)}
+
+function go(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.getElementById('sidebar').classList.remove('open');window.scrollTo(0,0)}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+
+/* command bar */
+function runCmd(){const q=document.getElementById('cmd').value.toLowerCase();document.getElementById('cmd').value='';
+ if(q.includes('debe')||q.includes('cobrar')){toast('Abriendo Cobrar: 3 facturas por cobrar, $96K vencido');go('cobrar')}
+ else if(q.includes('factura')||q.includes('gasto')||q.includes('ticket')){toast('Abriendo Caja: sube la foto o sincroniza correo');go('caja')}
+ else if(q.includes('licit')){toast('Abriendo Licitaciones');go('licitaciones')}
+ else if(q.includes('agenda')||q.includes('visita')){toast('Visita agendada y notificada por WhatsApp (demo)')}
+ else if(q.includes('cotiza')||q.includes('m²')||q.includes('m2')){toast('Creando cotización nueva…');go('cotizar')}
+ else {asPush('"'+q+'"','user');setTimeout(()=>asPush('Entendido. En producción respondería con tu catálogo e historial. Prueba el cotizador o la caja.','bot'),500)}}
+
+/* onboarding */
+function openOnboarding(){document.getElementById('onboarding').classList.add('on')}
+function closeOnboarding(){document.getElementById('onboarding').classList.remove('on')}
+
+/* roles */
+function setRole(r){state.role=r;toast(r==='supervisor'||r==='contador'?'Vista '+r+': sin márgenes de la central / precios visibles':'Vista '+r+': acceso completo')}
+
+/* kanban */
+function renderKanban(){const k=document.getElementById('kanban');k.innerHTML='';PIPE.forEach(col=>{const d=document.createElement('div');d.className='kcol';d.innerHTML=`<div class="kcol-head">${col.col}<span class="badge">${col.items.length}</span></div>`;const b=document.createElement('div');b.className='kcol-body';col.items.forEach(it=>{const c=document.createElement('div');c.className='kcard '+it.k;c.innerHTML=`<div class="t">${it.t}</div><div class="m">${it.m}</div><div class="amt">${it.amt}</div>`;b.appendChild(c)});d.appendChild(b);k.appendChild(d)})}
+
+/* cotizador */
+function goStep(n){state.step=Math.min(5,Math.max(1,state.step+n));document.querySelectorAll('#steps .step').forEach(s=>{const v=+s.dataset.s;s.classList.toggle('on',v===state.step);s.classList.toggle('done',v<state.step)});document.querySelectorAll('.panel-step').forEach(p=>p.classList.toggle('on',+p.dataset.p===state.step));document.getElementById('btnBack').disabled=state.step===1;document.getElementById('btnNext').style.display=state.step===5?'none':'inline-flex';document.getElementById('btnProp').style.display=state.step===5?'inline-flex':'none';calc()}
+function areas(){const p=parseFloat(document.getElementById('mPlanta').value)||0,per=parseFloat(document.getElementById('mPer').value)||0,alt=parseFloat(document.getElementById('mAlt').value)||0,baj=parseFloat(document.getElementById('mBaj').value)||0,dom=parseFloat(document.getElementById('mDom').value)||0,duc=parseFloat(document.getElementById('mDuc').value)||0;return{planta:p,dev:p+per*alt+per*0.15+baj*0.5+dom*1.2+duc*0.4}}
+function cost(key){const s=SYSTEMS[key],prov=document.getElementById('pProv')?document.getElementById('pProv').value:'nac';const mat=s.mat*(prov==='psm'?0.7:1);return(mat*(1+s.waste)+s.labor+s.cons)*(1+parseFloat(document.getElementById('pInd')?.value||8)/100)}
+function perYear(key){const s=SYSTEMS[key];return Math.round((s.promo+s.life*6)/s.life)}
+function calc(){const a=areas();document.getElementById('areaDev').textContent=a.dev.toFixed(1)+' m²';document.getElementById('areaNote').textContent='planta '+a.planta.toFixed(1)+' + pretiles/chaflanes/bajantes/domos/ductos ('+(a.dev-a.planta).toFixed(0)+' m² extra que se cobran)';const key=state.sel==='A'?state.optA:state.optB,s=SYSTEMS[key];let unit=s.promo;const mode=document.getElementById('pMode')?.value||'promo';if(mode==='lista')unit=s.list;if(mode==='manual')unit=s.list*0.97;if(mode==='margen'){const c=cost(key);unit=c/(1-(parseFloat(document.getElementById('pMargin')?.value||32)/100))}const disc=(parseFloat(document.getElementById('pDisc')?.value||0)/100);unit=unit*(1-disc);const ext=EXTRAS.filter(e=>e.on);const sub=a.dev*unit+ext.reduce((x,e)=>x+e.q*e.pu,0),iva=sub*0.16;document.getElementById('sArea').textContent=a.dev.toFixed(1)+' m²';document.getElementById('sSistema').textContent=s.short;document.getElementById('sUnit').textContent=FMT(unit)+'/m²';document.getElementById('sSub').textContent=FMT(sub);document.getElementById('sIva').textContent=FMT(iva);document.getElementById('sTotal').textContent=FMT(sub+iva);const c=cost(key),m=(unit-c)/unit,cls=m>=state.floor/100?'ok':m>=state.floor/100-0.07?'warn':'bad';document.getElementById('sMargen').innerHTML=`<span class="semaforo ${cls}">${(m*100).toFixed(0)}%</span> <span style="font-size:11px;color:var(--gris)">margen · piso ${state.floor}%</span>`;document.getElementById('sEstado').innerHTML=cls==='bad'?'<span class="badge bad">Requiere autorización de gerencia</span>':cls==='warn'?'<span class="badge warn">Cerca del piso</span>':'<span class="badge ok">Lista para enviar</span>';renderOpts();if(document.getElementById('apuToggle')?.checked)renderAPU();renderChecks();renderCat()}
+function renderOpts(){const g=document.getElementById('optGrid');g.innerHTML='';const r=(key,letter)=>{const s=SYSTEMS[key],a=areas(),c=cost(key),m=(s.promo-c)/s.promo,cls=m>=state.floor/100?'ok':m>=state.floor/100-0.07?'warn':'bad';const d=document.createElement('div');d.className='opt'+(state.sel===letter?' sel':'');d.onclick=()=>{state.sel=letter;calc()};d.innerHTML=`${letter==='B'?'<span class="reco">Recomendada</span>':'<span class="reco" style="background:var(--gris)">Lo que pidió</span>'}<h3>${s.name}</h3><div class="price"><s style="color:var(--gris);font-size:15px">${FMT(s.list)}</s> ${FMT(s.promo)} <small>/m² + IVA</small></div><dl><dt>Total ${a.dev.toFixed(0)} m²</dt><dd>${FMT(a.dev*s.promo)} + IVA</dd><dt>Vida útil</dt><dd>${s.life} años</dd><dt>Garantía</dt><dd>${s.warranty} años</dd><dt><b>$/m²/año</b></dt><dd><b>${FMT(perYear(key))}</b></dd><dt>Pago</dt><dd>${s.pago}</dd></dl><div style="margin-top:7px;display:flex;align-items:center;gap:8px"><span class="semaforo ${cls}" style="font-size:14px">${(m*100).toFixed(0)}%</span><span style="font-size:10.5px;color:var(--gris)">margen bruto</span></div>`;g.appendChild(d)};r(state.optA,'A');r(state.optB,'B')}
+function renderAPU(){const s=SYSTEMS[state.sel==='A'?state.optA:state.optB],a=areas(),ext=EXTRAS.filter(e=>e.on),rows=[{c:'Suministro y aplicación de '+s.name,u:'m²',q:a.dev,pu:s.promo},...ext],sub=rows.reduce((x,r)=>x+r.q*r.pu,0),iva=sub*0.16;document.getElementById('apuWrap').style.display='block';document.getElementById('apuTbl').innerHTML='<tr><th>Part.</th><th>Descripción</th><th>Unidad</th><th class="num">Cant.</th><th class="num">P.U.</th><th class="num">Importe</th></tr>'+rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.c}</td><td>${r.u}</td><td class="num">${r.q.toLocaleString('es-MX',{maximumFractionDigits:2})}</td><td class="num">${FMT2(r.pu)}</td><td class="num">${FMT2(r.q*r.pu)}</td></tr>`).join('')+`<tr><td colspan="5" class="num"><b>Subtotal</b></td><td class="num"><b>${FMT2(sub)}</b></td></tr><tr><td colspan="5" class="num">IVA 16%</td><td class="num">${FMT2(iva)}</td></tr><tr><td colspan="5" class="num"><b>TOTAL</b></td><td class="num"><b>${FMT2(sub+iva)}</b></td></tr>`}
+function renderChecks(){const checks=[['ok','Área desarrollada incluye pretiles, chaflanes, bajantes, domos y ductos.'],['warn','Área no verificada en sitio: la propuesta lleva "a reserva de verificar área".'],['bad','Encharcamiento sin partida de corrección de pendiente: la garantía no se sostiene.'],['ok','Título y procedimiento consistentes (evita el error 4.5mm vs 3.5mm de la 2026-042).'],['warn','Producto "10 años" con garantía 5: la propuesta debe explicar la diferencia.']];document.getElementById('checks').innerHTML=checks.map(c=>`<div class="rule"><span class="ic ${c[0]}">${c[0]==='ok'?'✓':'!'}</span><div>${c[1]}</div></div>`).join('')}
+function diag(){const o=document.getElementById('diagOut');o.innerHTML='<div class="alert b">Analizando fotos contra el árbol de fallas…</div>';setTimeout(()=>{o.innerHTML=`<div class="alert r"><b>Crítico</b> · Encharcamiento NE → partida corrección de pendiente</div><div class="alert r"><b>Crítico</b> · Ampollas 15% → partida retiro</div><div class="alert y"><b>Alto</b> · Fisuras pretil sur → partida resane</div><div class="alert y"><b>Alto</b> · Bajante 2 sin refuerzo → partida refuerzo</div><div class="alert g"><b>Recomendación:</b> Rollo SBS 4.5 mm (encharcamiento + tránsito). Alternativa: acrílico solo con pendiente corregida al 100%.</div>`;calc();toast('Diagnóstico listo: 4 partidas previas sugeridas')},900)}
+function renderCat(){const t=document.getElementById('catTbl');if(!t)return;t.innerHTML='<tr><th>Sistema</th><th class="num">Material</th><th class="num">Destajo</th><th class="num">Merma</th><th class="num">Vida</th><th class="num">Garantía</th><th class="num">Lista</th><th class="num">Promo</th><th class="num">Mínimo</th><th class="num">Margen</th></tr>'+Object.entries(SYSTEMS).map(([k,s])=>{const c=cost(k),m=(s.promo-c)/s.promo,cls=m>=state.floor/100?'ok':m>=state.floor/100-0.07?'warn':'bad',min=c/(1-state.floor/100);return `<tr><td><b>${s.short}</b></td><td class="num">${FMT(s.mat)}</td><td class="num">${FMT(s.labor)}</td><td class="num">${(s.waste*100).toFixed(0)}%</td><td class="num">${s.life}a</td><td class="num">${s.warranty}a</td><td class="num">${FMT(s.list)}</td><td class="num"><b>${FMT(s.promo)}</b></td><td class="num" style="color:var(--verde-600)">${FMT(min)}</td><td class="num"><span class="semaforo ${cls}" style="font-size:14px">${(m*100).toFixed(0)}%</span></td></tr>`}).join('')}
+
+/* caja */
+function tabCaja(id,btn){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['bandeja','captura','libro','utilidad'].forEach(k=>document.getElementById('c-'+k).style.display=k===id?'block':'none')}
+function ocr(){document.getElementById('ocrOut').style.display='block';toast('IA leyó la foto: proveedor, monto e IVA extraídos')}
+function syncMail(){toast('Correo conectado: 2 CFDI nuevos en bandeja, deduplicados por UUID')}
+function runAiReview(){toast('Revisión IA: 1 margen bajo piso, 2 comprobantes por revisar, 1 licitación nueva')}
+
+/* asistente */
+function asPush(t,w){const d=document.createElement('div');d.className='msg '+w;d.textContent=t;document.getElementById('asBody').appendChild(d);document.getElementById('asBody').scrollTop=99999}
+function asSend(){const i=document.getElementById('asIn');if(!i.value.trim())return;asPush(i.value,'user');i.value='';setTimeout(()=>asPush('🤖 En producción respondo con tu catálogo, historial y precios. Por ahora prueba el cotizador, la caja o la barra de comando de arriba.','bot'),500)}
+
+/* init */
+renderKanban();calc();
+</script>
+</body>
+</html>

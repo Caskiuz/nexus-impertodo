@@ -1,0 +1,35 @@
+{
+  "name": "nexus-impertodo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IMPERTODO AI OS — sistema operativo de impermeabilización by Nexus: cotizador inteligente, CRM, obra/OT, inventario, caja con CFDI y aprobaciones, más red de franquicias con regalías 6%+2%, fee tecnológico y comisión 20% del desarrollador con bandeja de avisos. Next.js + Prisma + Vercel.",
+  "scripts": {
+    "predev": "node scripts/set-provider.mjs",
+    "dev": "next dev",
+    "build": "node scripts/set-provider.mjs && prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "node scripts/set-provider.mjs && prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "vercel-build": "node scripts/set-provider.mjs && prisma generate && prisma db push --skip-generate && tsx prisma/seed.ts && next build"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "bcryptjs": "^2.4.3",
+    "next": "15.1.6",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "prisma": "^6.2.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
