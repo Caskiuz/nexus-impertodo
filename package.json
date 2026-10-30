@@ -9,11 +9,13 @@
     "build": "node scripts/set-provider.mjs && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "node scripts/set-provider.mjs && prisma db push",
+    "db:push": "node scripts/set-provider.mjs && node scripts/db-push.mjs",
     "db:seed": "tsx prisma/seed.ts",
-    "vercel-build": "node scripts/set-provider.mjs && prisma generate && prisma db push --skip-generate && tsx prisma/seed.ts && next build"
+    "vercel-build": "node scripts/set-provider.mjs && prisma generate && node scripts/db-push.mjs && tsx prisma/seed.ts && next build"
   },
   "dependencies": {
+    "@neon/config": "^1.9.6",
+    "@neon/env": "^1.6.6",
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
     "next": "15.1.6",

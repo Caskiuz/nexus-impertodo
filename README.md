@@ -60,17 +60,20 @@ AUTH_SECRET="cambia-esto-en-produccion"
 AUTH_TRUST_HOST=true
 ```
 
-## ☁️ Despliegue en Vercel (cuenta Caskiuz)
+## ☁️ Despliegue en Vercel (cuenta Caskiuz) con Neon
 
 1. **Repositorio**: sube este repo a `https://github.com/Caskiuz/nexus-impertodo`.
-2. **Proyecto en Vercel**: *Add New Project* → importa `Caskiuz/nexus-impertodo`.
-3. **Base de datos**: pestaña *Storage* → **Create Database → Postgres (Neon)** (plan gratuito). Copia la connection string.
+2. **Neon**: el proyecto ya está vinculado en `neon.ts` + `.neon` (org/proyecto/rama `production`). Para provisionar/pull de variables: `neon deploy` (escribe `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directo en `.env`).
+3. **Proyecto en Vercel**: *Add New Project* → importa `Caskiuz/nexus-impertodo`.
 4. **Variables de entorno** del proyecto:
-   - `DATABASE_URL` = connection string de Neon (Postgres, incluye `?sslmode=require`)
+   - `DATABASE_URL` = conexión **pooled** de Neon (host con `-pooler`)
+   - `DATABASE_URL_UNPOOLED` = conexión **directa** (sin `-pooler`) → la usan las migraciones
    - `AUTH_SECRET` = una cadena aleatoria larga (32+ caracteres)
    - `AUTH_TRUST_HOST` = `true`
-5. **Deploy**. El build usa `vercel-build`: cambia el provider de Prisma a `postgresql`, genera el cliente, crea las tablas (`db push`) y **siembra los datos demo** en el primer deploy. No requiere pasos manuales.
+5. **Deploy**. El build usa `vercel-build`: cambia el provider de Prisma a `postgresql`, genera el cliente, crea las tablas con la conexión **directa** (`scripts/db-push.mjs`) y **siembra los datos demo** en el primer deploy. No requiere pasos manuales.
 6. Abre la URL del proyecto y entra con las credenciales demo. Cambia las contraseñas antes de darlo a un cliente real.
+
+> `scripts/db-push.mjs` implementa la recomendación de Neon: **pooled para la app, directo para migraciones**. Si solo existe `DATABASE_URL`, se usa como respaldo.
 
 > Nota: el script `scripts/set-provider.mjs` detecta automáticamente SQLite (`file:`) vs PostgreSQL (`postgres://`) para que el mismo repo funcione en local y en Vercel.
 
