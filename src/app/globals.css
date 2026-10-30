@@ -363,3 +363,75 @@ img{max-width:100%;height:auto}
 .agent-btn:disabled{opacity:.65;cursor:wait;transform:none}
 .agent-btn .t{display:block}
 .agent-btn .run{display:inline-block;margin-top:6px;font-size:10.5px;font-weight:800;color:var(--azul);text-transform:uppercase;letter-spacing:.04em}
+
+/* ===================== Login: escena 3D serena ===================== */
+.login-wrap{position:relative;overflow:hidden;isolation:isolate}
+.login-card{position:relative;z-index:2}
+.login-scene{position:absolute;left:0;right:0;bottom:0;height:64vh;min-height:380px;perspective:900px;pointer-events:none;z-index:0;overflow:hidden}
+.login-scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,36,56,0) 0%,rgba(15,36,56,.22) 62%,rgba(15,24,38,.5) 100%)}
+
+.scene-glow{position:absolute;left:50%;bottom:-42%;width:125%;height:130%;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 68%,rgba(244,184,30,.26),rgba(31,78,121,.20) 42%,transparent 70%);filter:blur(34px);animation:sceneGlow 18s ease-in-out infinite}
+.scene-grid{position:absolute;left:-32%;right:-32%;bottom:-12%;height:88%;background-image:linear-gradient(rgba(207,224,238,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(207,224,238,.10) 1px,transparent 1px);background-size:52px 52px;transform:rotateX(64deg);transform-origin:50% 100%;mask-image:linear-gradient(to top,rgba(0,0,0,.85),transparent 78%);-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.85),transparent 78%);animation:gridFlow 24s linear infinite}
+
+.wave{position:absolute;left:-20%;width:140%;height:180px;border-radius:50%;transform:rotateX(70deg);transform-origin:50% 100%;filter:blur(11px);opacity:.72;will-change:transform}
+.wave.w1{bottom:4%;background:radial-gradient(ellipse at 50% 50%,rgba(31,78,121,.8),rgba(31,78,121,0) 66%);animation:waveFloat 22s ease-in-out infinite}
+.wave.w2{bottom:14%;background:radial-gradient(ellipse at 50% 50%,rgba(52,95,123,.7),rgba(52,95,123,0) 66%);animation:waveFloat 28s ease-in-out infinite reverse}
+.wave.w3{bottom:26%;height:132px;background:radial-gradient(ellipse at 50% 50%,rgba(244,184,30,.30),rgba(244,184,30,0) 62%);animation:waveFloat 34s ease-in-out infinite}
+
+.ring{position:absolute;border-radius:50%;border:1.5px solid rgba(244,184,30,.32);box-shadow:0 0 40px rgba(244,184,30,.10),inset 0 0 28px rgba(244,184,30,.06);transform:rotateX(72deg);animation:ringSpin 40s linear infinite;opacity:.55}
+.ring.r1{width:180px;height:180px;right:12%;bottom:16%}
+.ring.r2{width:92px;height:92px;left:14%;bottom:30%;border-color:rgba(207,224,238,.32);animation-duration:56s;animation-direction:reverse}
+
+.orb{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffeab0,#F4B81E 58%,rgba(244,184,30,0) 72%);filter:blur(.6px);opacity:.5;animation:orbFloat 26s ease-in-out infinite}
+.orb.o1{width:10px;height:10px;left:18%;bottom:34%}
+.orb.o2{width:7px;height:7px;left:72%;bottom:22%;animation-duration:32s;animation-delay:-8s;opacity:.38}
+.orb.o3{width:5px;height:5px;left:48%;bottom:12%;animation-duration:22s;animation-delay:-14s;opacity:.34}
+.orb.o4{width:6px;height:6px;left:86%;bottom:42%;animation-duration:36s;animation-delay:-5s;background:radial-gradient(circle at 35% 30%,#ffffff,#cfe0ee 60%,rgba(207,224,238,0) 72%)}
+
+.scene-sheen{position:absolute;top:4%;bottom:0;left:-42%;width:36%;background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.05) 42%,rgba(244,184,30,.10) 50%,rgba(255,255,255,.05) 58%,transparent 100%);transform:skewX(-12deg);animation:sheenSweep 16s ease-in-out infinite}
+
+@keyframes gridFlow{from{background-position:0 0,0 0}to{background-position:0 52px,52px 0}}
+@keyframes waveFloat{0%,100%{transform:rotateX(70deg) translateY(0) scaleX(1)}50%{transform:rotateX(70deg) translateY(-16px) scaleX(1.05)}}
+@keyframes ringSpin{to{transform:rotateX(72deg) rotateZ(360deg)}}
+@keyframes orbFloat{0%,100%{transform:translateY(0) scale(1);opacity:.32}50%{transform:translateY(-42px) scale(1.3);opacity:.7}}
+@keyframes sceneGlow{0%,100%{opacity:.72;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.07)}}
+@keyframes sheenSweep{0%,68%,100%{transform:translateX(0) skewX(-12deg);opacity:0}12%{opacity:.55}46%{transform:translateX(330%) skewX(-12deg);opacity:.55}62%{opacity:0}}
+
+@media(max-width:760px){
+  .login-scene{height:52vh;min-height:300px}
+  .scene-grid{background-size:38px 38px;animation-duration:30s}
+  .wave{height:120px;filter:blur(8px)}
+  .ring.r1{width:118px;height:118px;right:6%;bottom:14%}
+  .ring.r2{display:none}
+  .scene-sheen{display:none}
+  .orb.o4{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .login-scene *{animation:none!important}
+}
+
+/* Escena del login — refuerzo visual (capas más perceptibles) */
+.login-scene::before{content:"";position:absolute;left:-8%;right:-8%;bottom:37%;height:1.5px;background:linear-gradient(90deg,transparent,rgba(244,184,30,.55),rgba(207,224,238,.4),transparent);filter:blur(.4px);opacity:.7;animation:edgePulse 15s ease-in-out infinite}
+.login-scene::after{background:linear-gradient(180deg,rgba(15,36,56,0) 0%,rgba(15,36,56,.18) 64%,rgba(15,24,38,.38) 100%)}
+.scene-glow{background:radial-gradient(ellipse at 50% 66%,rgba(244,184,30,.34),rgba(31,78,121,.26) 44%,transparent 72%)}
+.scene-grid{background-image:linear-gradient(rgba(207,224,238,.17) 1px,transparent 1px),linear-gradient(90deg,rgba(207,224,238,.17) 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to top,rgba(0,0,0,.95),transparent 84%);-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.95),transparent 84%)}
+.wave{opacity:.88;filter:blur(7px)}
+.wave.w1{height:210px;background:radial-gradient(ellipse at 50% 50%,rgba(31,78,121,.95),rgba(31,78,121,.55) 46%,rgba(31,78,121,0) 70%);box-shadow:0 0 70px rgba(31,78,121,.45)}
+.wave.w2{height:190px;background:radial-gradient(ellipse at 50% 50%,rgba(52,95,123,.9),rgba(52,95,123,.45) 48%,rgba(52,95,123,0) 70%);box-shadow:0 0 60px rgba(52,95,123,.35)}
+.wave.w3{height:150px;background:radial-gradient(ellipse at 50% 50%,rgba(244,184,30,.42),rgba(244,184,30,.16) 48%,rgba(244,184,30,0) 68%)}
+.ring{border-color:rgba(244,184,30,.55);opacity:.8;box-shadow:0 0 46px rgba(244,184,30,.18),inset 0 0 30px rgba(244,184,30,.08)}
+.ring.r2{border-color:rgba(207,224,238,.5)}
+.orb{opacity:.7;filter:blur(.4px)}
+.orb.o1{width:12px;height:12px}
+.orb.o2{width:9px;height:9px;opacity:.55}
+.orb.o3{width:6px;height:6px;opacity:.5}
+.orb.o4{opacity:.6}
+.orb.o5{width:5px;height:5px;left:32%;bottom:18%;animation-duration:28s;animation-delay:-12s;opacity:.45}
+.orb.o6{width:8px;height:8px;left:62%;bottom:38%;animation-duration:34s;animation-delay:-20s;opacity:.5}
+@keyframes edgePulse{0%,100%{opacity:.55;transform:scaleX(.96)}50%{opacity:.9;transform:scaleX(1.02)}}
+@media(max-width:760px){
+  .wave.w1{height:150px}
+  .wave.w2{height:140px}
+  .wave.w3{height:110px}
+  .orb.o5,.orb.o6{display:none}
+}

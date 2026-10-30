@@ -5,6 +5,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   return (
     <div className="login-wrap">
+      <div className="login-scene" aria-hidden="true">
+        <div className="scene-glow" />
+        <div className="scene-grid" />
+        <div className="wave w1" />
+        <div className="wave w2" />
+        <div className="wave w3" />
+        <div className="ring r1" />
+        <div className="ring r2" />
+        <div className="orb o1" />
+        <div className="orb o2" />
+        <div className="orb o3" />
+        <div className="orb o4" />
+        <div className="orb o5" />
+        <div className="orb o6" />
+        <div className="scene-sheen" />
+      </div>
       <div className="login-card">
         <div className="mark">I</div>
         <h1>IMPERTODO AI OS</h1>
