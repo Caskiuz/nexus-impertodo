@@ -7,33 +7,59 @@ interface Msg {
   text: string;
 }
 
-const replies: { match: RegExp; reply: string }[] = [
-  { match: /cobr|debe|adeuda/i, reply: 'Tienes 3 facturas por cobrar ($412K, $96K vencido). Abre "Cobrar" para ver el detalle y los recordatorios. Recuerda: el envío real por WhatsApp se activa en fase 2.' },
-  { match: /cotiz|m2|m²|metro/i, reply: 'Ve a "Cotizar" (o usa la barra de comandos: "cotiza 300 m2 acrílico 10 para OXXO"). El motor calcula área desarrollada, costo, margen contra el piso del 30% y valida antes de enviar.' },
-  { match: /factura|gasto|xml|cfdi|ticket/i, reply: 'En "Caja / Contabilidad" puedes capturar gastos o registrar XML CFDI. Un UUID duplicado se bloquea. La IA clasifica; tú apruebas; nada se contabiliza solo.' },
-  { match: /obra|ot|fase/i, reply: 'En "Obra / OT" cada fase se comprueba con foto + m². La OT nace al aprobar una cotización y al entregar se genera la garantía digital.' },
-  { match: /franquicia|regal|red|central/i, reply: 'En "Franquicias" está la red: Torreón (matriz), Monterrey (piloto) y Querétaro (prospecto). Regalía 6% + marketing 2% sobre ventas timbradas y fee tecnológico de $2,500/mes. La central ve todo desde "Central (red)".' },
-  { match: /margen|precio|costo/i, reply: 'El margen real se calcula como (venta − costo) / venta. El piso está en 30%: por debajo requiere autorización de gerencia. El catálogo maestro alimenta todos los cálculos.' },
-  { match: /hola|buen|ayuda/i, reply: 'Hola 👋 Soy el asistente de IMPERTODO AI OS. Puedo decirte dónde encontrar cobranza, cotizaciones, facturas, obra, red de franquicias o el panel de comisión del desarrollador.' }
+const fallbacks: { match: RegExp; reply: string }[] = [
+  { match: /cobr|debe|adeuda/i, reply: 'Tienes facturas por cobrar en el módulo Cobrar. Ahí ves vencidos y registras recordatorios; el cobro se marca manualmente.' },
+  { match: /cotiz|m2|m²|precio/i, reply: 'Abre Cotizar: el wizard calcula área desarrollada, costos, margen contra el piso y valida antes de enviar. También puedes usar la barra de comandos.' },
+  { match: /factura|gasto|xml|cfdi|ticket/i, reply: 'En Caja puedes capturar gastos o subir XML CFDI; los UUID duplicados se bloquean y requiere revisión de Administración y Gerencia.' },
+  { match: /obra|ot|fase/i, reply: 'En Obra/OT avanzas fases con evidencia, controlas consumo teórico vs real y entregas con garantía digital.' },
+  { match: /franquicia|regal|red|central/i, reply: 'En Franquicias ves la red y sus reglas; en Central registras ventas timbradas, regalías 6%+2% y fees. La comisión del 20% se devenga sola.' },
+  { match: /margen|piso/i, reply: 'El margen se calcula como (venta − costo) / venta. Por debajo del piso requiere autorización de Gerencia; el catálogo define el piso.' }
 ];
+
+const suggestions = ['¿Qué debo atender hoy?', '¿Cómo va la red de franquicias?', '¿Cuánto hay por cobrar?'];
 
 export default function Assistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
-    { who: 'bot', text: 'Hola 👋 Puedo guiarte por cotizaciones, cobranza, facturas, obra o la red de franquicias. ¿Qué necesitas?' }
+    {
+      who: 'bot',
+      text: 'Hola 👋 Soy el asistente con IA de IMPERTODO AI OS. Puedo leer tus indicadores actuales y guiarte por cotizaciones, cobranza, obra o la red de franquicias. ¿Qué necesitas?'
+    }
   ]);
 
-  function send() {
-    const text = input.trim();
-    if (!text) return;
+  async function send(text?: string) {
+    const message = (text ?? input).trim();
+    if (!message || busy) return;
     setInput('');
-    setMsgs((m) => [...m, { who: 'user', text }]);
-    const found = replies.find((r) => r.match.test(text));
-    const reply = found
-      ? found.reply
-      : 'En producción respondería con tu catálogo e historial. Prueba el cotizador, la caja, la red de franquicias o la barra de comandos.';
-    window.setTimeout(() => setMsgs((m) => [...m, { who: 'bot', text: reply }]), 350);
+    setMsgs((m) => [...m, { who: 'user', text: message }]);
+    setBusy(true);
+
+    try {
+      const res = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      if (!res.ok) throw new Error('respuesta no válida');
+      const data = await res.json();
+      if (!data.reply) throw new Error('sin respuesta');
+      setMsgs((m) => [...m, { who: 'bot', text: String(data.reply) }]);
+    } catch {
+      const found = fallbacks.find((r) => r.match.test(message));
+      setMsgs((m) => [
+        ...m,
+        {
+          who: 'bot',
+          text:
+            (found ? found.reply : 'No pude conectar con la IA en este momento. Puedo guiarte por los módulos: Hoy, Cotizar, Obra, Caja, Cobrar, Franquicias y Central.') +
+            ''
+        }
+      ]);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -45,7 +71,7 @@ export default function Assistant() {
         <div className="as-head">
           <div>
             <div className="t">Asistente IA · PROSEALMASTER</div>
-            <div className="s">en línea · reglas reales, sin inventar</div>
+            <div className="s">Gemini · datos en vivo de tu operación</div>
           </div>
         </div>
         <div className="as-body">
@@ -54,6 +80,16 @@ export default function Assistant() {
               {m.text}
             </div>
           ))}
+          {busy && <div className="msg bot typing">Escribiendo…</div>}
+          {msgs.length === 1 && (
+            <div className="as-chips">
+              {suggestions.map((s) => (
+                <button key={s} type="button" onClick={() => send(s)}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="as-foot">
           <input
@@ -62,9 +98,10 @@ export default function Assistant() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') send();
             }}
-            placeholder="Pregunta o escribe una orden…"
+            placeholder="Pregunta sobre tu operación…"
+            disabled={busy}
           />
-          <button onClick={send} aria-label="Enviar">
+          <button onClick={() => send()} aria-label="Enviar" disabled={busy}>
             ➤
           </button>
         </div>

@@ -31,6 +31,7 @@ Propuesta pública demo: `/p/2026-042`
 - **Captación** — estimador web que crea lead, radar de techos (secuencias demo), licitaciones con match y pre-llenado.
 - **Catálogo / Precios** — parámetros globales (piso, indirectos, proveedor PSM −30%), tabla de márgenes y precio mínimo, **ficha de costos con evidencia** que desbloquea aprobaciones.
 - **Agentes IA** — reglas deterministas sobre datos reales (sin llamadas a IA externas, costo $0) + bitácora de auditoría.
+- **Asistente IA flotante (Gemini)** — chat conectado a `gemini-2.5-flash` con contexto real de tu operación (pipeline, cobranza, documentos, inventario, red). Si falta `GEMINI_API_KEY` o se agota la cuota, responde con reglas locales.
 - **Franquicias** — unidades (Torreón matriz, Monterrey piloto, Querétaro prospecto), reglas de red (regalía **6% + 2% sobre ventas timbradas**, fee **$2,500/mes**, compra exclusiva PROSEALMASTER, nota COF/IMPI), alta y **adquisición de franquicia** con activación de unidad.
 - **Central** — registro de ventas timbradas, cálculo de regalías (con delta para no duplicar), fees, pedidos de producto.
 - **Comisión del 20% (panel DEV)** — libro mayor automático sobre **toda la red** (cuota de franquicia, regalías, fees y producto). Cada evento crea un asiento `DEVENGADA` y un aviso. El cobro se marca manualmente (sin pasarela).
@@ -71,6 +72,7 @@ AUTH_TRUST_HOST=true
    - `DATABASE_URL_UNPOOLED` = conexión **directa** (sin `-pooler`) → la usan las migraciones
    - `AUTH_SECRET` = una cadena aleatoria larga (32+ caracteres)
    - `AUTH_TRUST_HOST` = `true`
+   - `GEMINI_API_KEY` = key de Google AI Studio para el asistente IA (opcional: sin ella el chat usa respaldo por reglas)
 5. **Deploy**. El build usa `vercel-build`: cambia el provider de Prisma a `postgresql`, genera el cliente, crea las tablas con la conexión **directa** (`scripts/db-push.mjs`) y **siembra los datos demo** en el primer deploy. No requiere pasos manuales.
 6. Abre la URL del proyecto y entra con las credenciales demo. Cambia las contraseñas antes de darlo a un cliente real.
 

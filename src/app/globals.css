@@ -335,3 +335,8 @@ img{max-width:100%;height:auto}
 /* Créditos de fotografías (Unsplash) */
 .photo-credit{font-size:9.5px;line-height:1.35;color:var(--gris);margin:3px 0 5px}
 .photo-credit a{color:var(--gris);text-decoration:underline}
+
+/* Asistente IA (Gemini) */
+.as-chips{display:flex;gap:6px;flex-wrap:wrap;padding:2px 2px 4px}
+.as-chips button{border:1px solid var(--linea);background:#fff;color:var(--azul-700);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:600}
+.msg.typing{color:var(--gris);font-style:italic}
