@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
+import AgentPanel from '@/components/AgentPanel';
 
 export default async function AgentesPage() {
   const user = await requireUser();
@@ -79,6 +80,8 @@ export default async function AgentesPage() {
           </div>
         </div>
       </div>
+
+      <AgentPanel />
 
       <div className="two" style={{ marginTop: 14 }}>
         <div className="card panel">

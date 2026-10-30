@@ -340,3 +340,19 @@ img{max-width:100%;height:auto}
 .as-chips{display:flex;gap:6px;flex-wrap:wrap;padding:2px 2px 4px}
 .as-chips button{border:1px solid var(--linea);background:#fff;color:var(--azul-700);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:600}
 .msg.typing{color:var(--gris);font-style:italic}
+
+/* Imágenes de producto/servicio — tamaños controlados */
+.img-thumb{display:block;width:44px;height:28px;min-width:44px;max-width:44px;object-fit:cover;border-radius:7px;border:1px solid var(--linea);background:var(--gris-50);flex:none}
+.opt-img{display:block;width:100%;height:88px;object-fit:cover;border-radius:9px;border:1px solid var(--linea);background:var(--gris-50);margin-bottom:7px}
+.prop-img{display:block;width:100%;height:72px;object-fit:cover;border-radius:8px;background:var(--gris-50);margin-bottom:4px}
+.svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.svc{margin:0;background:var(--gris-50);border:1px solid var(--linea);border-radius:9px;overflow:hidden}
+.svc img{display:block;width:100%;height:46px;object-fit:cover}
+.svc figcaption{font-size:9px;font-weight:700;color:var(--gris);padding:4px 5px;text-align:center;line-height:1.2}
+@media(max-width:760px){
+  .img-thumb{width:40px;height:26px;min-width:40px;max-width:40px}
+  .opt-img{height:96px}
+  .prop-img{height:80px}
+  .svc-grid{grid-template-columns:1fr 1fr}
+  .svc img{height:56px}
+}
