@@ -71,7 +71,7 @@ export default function Assistant() {
         <div className="as-head">
           <div>
             <div className="t">Asistente IA · PROSEALMASTER</div>
-            <div className="s">Gemini · datos en vivo de tu operación</div>
+            <div className="s">IA · datos en vivo de tu operación</div>
           </div>
         </div>
         <div className="as-body">

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
-import AgentPanel from '@/components/AgentPanel';
+import AgentCards from '@/components/AgentCards';
 
 export default async function AgentesPage() {
   const user = await requireUser();
@@ -42,46 +42,7 @@ export default async function AgentesPage() {
         </div>
       </div>
 
-      <div className="grid-3">
-        <div className="agent">
-          <span className="ic">📄</span>
-          <div className="t">
-            <b>Agente de documentos</b> — lee XML, detecta duplicados por UUID y clasifica borradores. <span className="badge warn">No contabiliza</span>
-          </div>
-        </div>
-        <div className="agent">
-          <span className="ic">💬</span>
-          <div className="t">
-            <b>Agente comercial</b> — detecta cotizaciones sin respuesta y sugiere seguimiento. <span className="badge warn">No envía solo</span>
-          </div>
-        </div>
-        <div className="agent">
-          <span className="ic">🔧</span>
-          <div className="t">
-            <b>Agente técnico</b> — valida espesores, fichas y coherencia del procedimiento. <span className="badge warn">No autoriza</span>
-          </div>
-        </div>
-        <div className="agent">
-          <span className="ic">💰</span>
-          <div className="t">
-            <b>Agente financiero</b> — margen bajo piso, gastos anómalos, 69-B. <span className="badge warn">No paga</span>
-          </div>
-        </div>
-        <div className="agent">
-          <span className="ic">🛒</span>
-          <div className="t">
-            <b>Agente de compras</b> — reposición bajo mínimo y comparación de costo instalado. <span className="badge warn">No compra</span>
-          </div>
-        </div>
-        <div className="agent">
-          <span className="ic">🏛️</span>
-          <div className="t">
-            <b>Agente de licitaciones</b> — puntúa coincidencia con experiencia y certificaciones. <span className="badge warn">No envía</span>
-          </div>
-        </div>
-      </div>
-
-      <AgentPanel />
+      <AgentCards />
 
       <div className="two" style={{ marginTop: 14 }}>
         <div className="card panel">

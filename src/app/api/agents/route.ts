@@ -15,6 +15,10 @@ const LABELS: Record<AgentKey, string> = {
   licitaciones: 'Agente de licitaciones'
 };
 
+// Caché corto en memoria para evitar llamadas repetidas a Gemini (cuota y latencia).
+const cache = new Map<string, { at: number; reply: string }>();
+const CACHE_MS = 60_000;
+
 const ROLES: Record<AgentKey, string> = {
   documentos:
     'Revisas la bandeja de comprobantes: XML CFDI, capturas y alertas. Detecta UUID duplicados, proveedores en lista 69-B, comprobantes sin RFC o datos incompletos y montos inusuales. No contabilizas ni pagas.',
@@ -102,7 +106,7 @@ async function buildContext(agent: AgentKey, unitId: string | null): Promise<str
 }
 
 function fallbackSummary(agent: AgentKey, context: string) {
-  return `No pude conectar con Gemini en este momento. Resumen de lo que veo:\n\n${context}\n\nRevisa el módulo correspondiente. La IA sugiere, el humano aprueba.`;
+  return `No pude conectar con la IA en este momento. Resumen de lo que veo:\n\n${context}\n\nRevisa el módulo correspondiente. La IA sugiere, el humano aprueba.`;
 }
 
 export async function POST(request: Request) {
@@ -145,11 +149,20 @@ export async function POST(request: Request) {
     'Módulos: Hoy, Cotizar, Clientes & Techos, Propuesta viva, Captación, Obra / OT, Inventario, Caja / Contabilidad, Cobrar, Aprobaciones, Licitaciones, Franquicias, Central (red), Catálogo / Precios, Agentes IA, Notificaciones.'
   ].join('\n');
 
+  const cacheKey = `${agent}:${unitId ?? 'all'}`;
+  const hit = cache.get(cacheKey);
+  if (hit && Date.now() - hit.at < CACHE_MS) {
+    return NextResponse.json({ reply: hit.reply, mode: 'gemini', reason: 'cache', agent });
+  }
+
   const result = await askGemini(system, `CONTEXTO ACTUAL:\n${context}\n\nGenera tu análisis y recomendaciones para hoy.`, 900);
+
+  if (result.text) cache.set(cacheKey, { at: Date.now(), reply: result.text });
 
   return NextResponse.json({
     reply: result.text || fallbackSummary(agent, context),
     mode: result.mode,
+    reason: result.reason,
     agent
   });
 }

@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     if (!res.ok) {
       if (res.status === 429) {
         return NextResponse.json({
-          reply: 'La cuota gratuita de Gemini se agotó por un momento. Mientras tanto: ' + fallbackReply(message, context),
+          reply: 'La IA está ocupada por un momento. Mientras tanto: ' + fallbackReply(message, context),
           mode: 'fallback'
         });
       }
