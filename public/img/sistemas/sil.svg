@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6fafd"/><stop offset="1" stop-color="#e6eef6"/></linearGradient>
+    <linearGradient id="white" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#dbe6ef"/></linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="16" fill="url(#bg)"/>
+  <ellipse cx="160" cy="176" rx="100" ry="10" fill="#c9d4e2" opacity=".55"/>
+  <circle cx="258" cy="52" r="22" fill="#F4B81E" opacity=".9"/>
+  <g stroke="#F4B81E" stroke-width="4" stroke-linecap="round" opacity=".75">
+    <path d="M258 18v-8M258 94v-8M292 52h8M216 52h8M282 28l6-6M228 82l6-6M282 76l6 6M228 22l6 6"/>
+  </g>
+  <path d="M48 138l118-20 118 20v24H48z" fill="#dbe6ef"/>
+  <path d="M48 138l118-20 118 20" fill="none" stroke="#ffffff" stroke-width="5" opacity=".9"/>
+  <path d="M94 136l24-4M132 126l18-3M182 124l20 3" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+  <path d="M108 96h74l-8 40h-58z" fill="url(#white)" stroke="#b9c6d4" stroke-width="2"/>
+  <ellipse cx="145" cy="96" rx="37" ry="7" fill="#f8fbfe" stroke="#b9c6d4" stroke-width="2"/>
+  <rect x="118" y="108" width="54" height="18" rx="6" fill="#1F4E79"/>
+  <text x="145" y="121" font-family="Arial, sans-serif" font-size="9" font-weight="800" text-anchor="middle" fill="#ffffff">SILICONA</text>
+  <path d="M76 158c14 4 30 4 44-2" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+</svg>

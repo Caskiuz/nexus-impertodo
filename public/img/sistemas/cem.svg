@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f7fafc"/><stop offset="1" stop-color="#e6ecf2"/></linearGradient>
+    <linearGradient id="sack" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e7dcc8"/><stop offset="1" stop-color="#cfbfa2"/></linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="16" fill="url(#bg)"/>
+  <ellipse cx="160" cy="178" rx="100" ry="9" fill="#cfd7e0" opacity=".5"/>
+  <path d="M196 60h84v118h-84z" fill="#d7e0e8"/>
+  <path d="M196 60h84v118h-84z" fill="none" stroke="#b9c6d4" stroke-width="2"/>
+  <path d="M196 96c28 8 56 8 84 0M196 132c28 8 56 8 84 0" stroke="#c3ced9" stroke-width="2"/>
+  <path d="M266 88c10 10 10 24 0 32-8-6-8-22 0-32z" fill="#7fb3d5" opacity=".8"/>
+  <path d="M78 92l64-8 12 62-62 8z" fill="url(#sack)" stroke="#b8a888" stroke-width="2"/>
+  <path d="M84 90l10-14 58-7 2 16" fill="#d9c9ac" stroke="#b8a888" stroke-width="2"/>
+  <rect x="94" y="104" width="42" height="26" rx="6" fill="#1F4E79"/>
+  <text x="115" y="115" font-family="Arial, sans-serif" font-size="8" font-weight="800" text-anchor="middle" fill="#ffffff">CEMENTO</text>
+  <text x="115" y="124" font-family="Arial, sans-serif" font-size="7.5" font-weight="700" text-anchor="middle" fill="#cfe0ee">FLEXIBLE</text>
+  <g transform="rotate(-30 206 150)">
+    <rect x="198" y="132" width="8" height="30" rx="4" fill="#8a6d3b"/>
+    <path d="M192 160h20l-5 13h-10z" fill="#e8eef4" stroke="#b9c6d4" stroke-width="1.5"/>
+  </g>
+  <path d="M168 150c10 3 22 3 32-1" stroke="#e8eef4" stroke-width="6" stroke-linecap="round"/>
+</svg>

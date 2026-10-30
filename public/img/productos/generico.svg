@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f5f8fc"/><stop offset="1" stop-color="#e4ebf3"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F4B81E"/><stop offset="1" stop-color="#e0a800"/></linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="16" fill="url(#bg)"/>
+  <ellipse cx="160" cy="172" rx="90" ry="9" fill="#c9d4e2" opacity=".55"/>
+  <path d="M104 96l56-22 56 22-56 22z" fill="#dbe6ef"/>
+  <path d="M104 96l56 22 56-22v42l-56 22-56-22z" fill="#c3ced9"/>
+  <path d="M104 96v42" stroke="#a9b8c7" stroke-width="2"/>
+  <path d="M104 96l56-22 56 22" fill="none" stroke="#b9c6d4" stroke-width="2"/>
+  <rect x="146" y="108" width="28" height="20" rx="4" fill="url(#gold)"/>
+  <text x="160" y="122" font-family="Arial, sans-serif" font-size="10" font-weight="800" text-anchor="middle" fill="#17212b">PSM</text>
+  <path d="M232 60c12 14 12 30 0 40-12-10-12-26 0-40z" fill="#7fb3d5" opacity=".8"/>
+  <path d="M226 76c6 8 6 16 0 22" stroke="#ffffff" stroke-width="2" fill="none" opacity=".6"/>
+  <circle cx="78" cy="58" r="14" fill="#1F4E79" opacity=".12"/>
+</svg>

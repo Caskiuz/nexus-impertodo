@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
+import { inventoryImage } from '@/lib/images';
 import { addStockAction, suggestOrderAction } from './actions';
 
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
@@ -70,7 +71,10 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
               return (
                 <tr key={i.id}>
                   <td>
-                    <b>{i.name}</b>
+                    <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+                      <img className="img-thumb" src={inventoryImage(i.name)} alt={i.name} />
+                      <b>{i.name}</b>
+                    </div>
                   </td>
                   <td className="num">
                     {i.stock} {i.unitName}

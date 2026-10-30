@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffaf1"/><stop offset="1" stop-color="#f4ead8"/></linearGradient>
+    <linearGradient id="heat" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F4B81E"/><stop offset="1" stop-color="#ef6c00"/></linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="16" fill="url(#bg)"/>
+  <circle cx="52" cy="50" r="18" fill="#F4B81E"/>
+  <g stroke="#F4B81E" stroke-width="4" stroke-linecap="round" opacity=".7">
+    <path d="M52 20v-7M52 87v-7M82 50h7M20 50h7M73 29l5-5M31 71l5-5M73 71l5 5M31 29l5 5"/>
+  </g>
+  <path d="M74 150h212v20H74z" fill="#c9d4e2"/>
+  <path d="M90 150h180v-14c-30-10-60 10-90 0s-60-8-90 0z" fill="url(#heat)" opacity=".85"/>
+  <path d="M90 136c30-8 60-10 90 0s60 8 90 0v-12c-30-10-60 10-90 0s-60-8-90 0z" fill="#ffffff" stroke="#e0cba0" stroke-width="1.5"/>
+  <path d="M90 124c30-8 60-10 90 0s60 8 90 0v-10c-30-10-60 10-90 0s-60-8-90 0z" fill="#e9f0f6" stroke="#cdd8e3" stroke-width="1.5"/>
+  <path d="M118 170v-20M196 170v-20" stroke="#9fb0c1" stroke-width="4"/>
+  <path d="M158 96c-8-6-8-18 0-24 8 6 8 18 0 24z" fill="#ef6c00" opacity=".7"/>
+  <path d="M272 84v40M266 124h12" stroke="#345f7b" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
+import { systemImage } from '@/lib/images';
 import { saveSettingsAction, saveCostSheetAction } from './actions';
 
 export default async function CatalogoPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string; sys?: string }> }) {
@@ -99,8 +100,13 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Pro
               return (
                 <tr key={s.key}>
                   <td>
-                    <b>{s.short}</b>
-                    <div className="mini">{s.name}</div>
+                    <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+                      <img className="img-thumb" src={systemImage(s.key)} alt={s.short} />
+                      <div>
+                        <b>{s.short}</b>
+                        <div className="mini">{s.name}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="num">
                     {s.cons} {s.unit === 'L' ? 'L/m²' : s.unit === 'm2' ? 'm²/m²' : 'kg/m²'}

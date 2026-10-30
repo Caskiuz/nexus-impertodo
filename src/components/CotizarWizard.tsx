@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { computeQuote, validations, type SystemDef, type QuoteInput } from '@/lib/calc';
 import { fmt, fmt2 } from '@/lib/constants';
+import { systemImage, elementImage } from '@/lib/images';
 import { saveQuoteAction } from '@/actions/quotes';
 
 interface ClientLite {
@@ -292,6 +293,18 @@ export default function CotizarWizard({
           <div className={`panel-step ${step === 2 ? 'on' : ''}`}>
             <h2>Medición y área desarrollada</h2>
             <div className="hint">El área desarrollada suma pretiles, chaflanes, bajantes, domos y ductos: hasta 15% que se dejan de cobrar.</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <img
+                className="img-thumb"
+                style={{ width: 104, height: 64, objectFit: 'cover' }}
+                src={elementImage(element)}
+                alt={element}
+              />
+              <div>
+                <b>{element}</b>
+                <div className="mini">Servicio seleccionado · el diagnóstico ajusta las partidas previas.</div>
+              </div>
+            </div>
             <div className="row3">
               <div className="field">
                 <label>Área en planta (m²)</label>
@@ -380,6 +393,7 @@ export default function CotizarWizard({
                 { letter: 'B' as const, key: optB, set: setOptB, comp: cB, sysDef: sysB }
               ].map(({ letter, key, set, comp, sysDef }) => (
                 <div key={letter} className={`opt ${selected === letter ? 'sel' : ''}`} onClick={() => setSelected(letter)}>
+                  <img className="opt-img" src={systemImage(sysDef.key)} alt={sysDef.name} />
                   <span className="reco" style={letter === 'B' ? undefined : { background: 'var(--gris)' }}>
                     {letter === 'B' ? 'Recomendada' : 'Lo que pidió'}
                   </span>

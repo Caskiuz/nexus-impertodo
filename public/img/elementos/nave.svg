@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f4f7fb"/><stop offset="1" stop-color="#e2e9f1"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7f95a9"/><stop offset="1" stop-color="#4b5d70"/></linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="16" fill="url(#bg)"/>
+  <path d="M40 156h240v18H40z" fill="#c9d4e2"/>
+  <path d="M62 156V96l98-34 98 34v60z" fill="#dbe6ef"/>
+  <path d="M62 96l98-34 98 34-98 22z" fill="url(#metal)"/>
+  <path d="M62 96l98 22 98-22M84 88l76 18M132 72l76 18M180 56l76 18M108 80l76 18M156 64l76 18" stroke="#5f7387" stroke-width="2" opacity=".8"/>
+  <rect x="128" y="118" width="64" height="38" rx="3" fill="#8fb3cc" opacity=".75"/>
+  <path d="M128 118h64M128 130h64M128 142h64" stroke="#6f8ba3" stroke-width="2"/>
+  <rect x="72" y="124" width="34" height="32" rx="3" fill="#345f7b" opacity=".55"/>
+  <rect x="214" y="124" width="34" height="32" rx="3" fill="#345f7b" opacity=".55"/>
+  <path d="M262 58c6 8 6 16 0 24-6-8-6-16 0-24z" fill="#F4B81E" opacity=".7"/>
+</svg>
