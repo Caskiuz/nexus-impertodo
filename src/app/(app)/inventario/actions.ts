@@ -36,3 +36,38 @@ export async function suggestOrderAction(formData: FormData) {
   revalidatePath('/inventario');
   redirect('/inventario?msg=pedido');
 }
+
+export async function createProductAction(formData: FormData) {
+  const user = await requireUser();
+  if (!['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role)) redirect('/inventario?err=rol');
+
+  const name = String(formData.get('name') || '').trim();
+  const unitName = String(formData.get('unitName') || '').trim() || 'cubeta';
+  const stock = Math.max(0, parseFloat(String(formData.get('stock') || '0')) || 0);
+  const min = Math.max(0, parseFloat(String(formData.get('min') || '0')) || 0);
+  const cost = Math.max(0, parseFloat(String(formData.get('cost') || '0')) || 0);
+  const provider = String(formData.get('provider') || '').trim() || 'PROSEALMASTER';
+
+  if (!name) redirect('/inventario?err=alta');
+
+  const item = await prisma.inventoryItem.create({
+    data: { name, stock, min, unitName, cost, provider }
+  });
+
+  if (stock > 0) {
+    await prisma.stockMovement.create({
+      data: { itemId: item.id, qty: stock, reason: 'Alta de producto · stock inicial' }
+    });
+  }
+
+  await logAudit(
+    user,
+    'Producto nuevo en inventario',
+    `${name} · stock inicial ${stock} ${unitName} · mínimo ${min} · costo ${cost} · ${provider}`
+  );
+
+  revalidatePath('/inventario');
+  revalidatePath('/hoy');
+  revalidatePath('/agentes');
+  redirect('/inventario?msg=creado');
+}

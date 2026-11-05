@@ -4,11 +4,12 @@ import { fmt } from '@/lib/constants';
 import { inventoryImage, inventorySvg } from '@/lib/images';
 import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
-import { addStockAction, suggestOrderAction } from './actions';
+import { addStockAction, suggestOrderAction, createProductAction } from './actions';
 
 export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
   const user = await requireUser();
   const sp = await searchParams;
+  const canCreate = ['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role);
   const settings = await prisma.settings.findUnique({ where: { id: 'default' } });
   const items = await prisma.inventoryItem.findMany({ orderBy: { name: 'asc' } });
 
@@ -27,7 +28,66 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
       </div>
       {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado.</div>}
       {sp.msg === 'pedido' && <div className="alert g">Pedido propuesto creado y avisado en la bandeja interna.</div>}
+      {sp.msg === 'creado' && <div className="alert g">Producto creado y registrado en la bitácora y auditoría.</div>}
+      {sp.err === 'rol' && <div className="alert r">Solo Administración, Central, Gerencia o el desarrollador pueden crear productos.</div>}
+      {sp.err === 'alta' && <div className="alert r">Completa al menos el nombre del producto.</div>}
       {sp.err === 'datos' && <div className="alert r">Cantidad inválida.</div>}
+
+      {canCreate && (
+        <details className="card panel" style={{ marginBottom: 14 }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, color: 'var(--azul-700)' }}>+ Nuevo producto</summary>
+          <form action={createProductAction} style={{ marginTop: 12 }}>
+            <div className="row3">
+              <div className="field">
+                <label>Nombre del producto</label>
+                <input name="name" required placeholder="Ej. Sellador acrílico blanco 19 L" />
+              </div>
+              <div className="field">
+                <label>Unidad</label>
+                <input name="unitName" list="unidades-inv" defaultValue="cubeta" required />
+                <datalist id="unidades-inv">
+                  <option value="cubeta" />
+                  <option value="rollo" />
+                  <option value="kg" />
+                  <option value="juego" />
+                  <option value="L" />
+                  <option value="pza" />
+                  <option value="m²" />
+                </datalist>
+              </div>
+              <div className="field">
+                <label>Stock inicial</label>
+                <input name="stock" type="number" min="0" step="1" defaultValue={0} />
+              </div>
+              <div className="field">
+                <label>Mínimo</label>
+                <input name="min" type="number" min="0" step="1" defaultValue={10} />
+              </div>
+              <div className="field">
+                <label>Costo unitario (MXN)</label>
+                <input name="cost" type="number" min="0" step="0.01" defaultValue={0} />
+              </div>
+              <div className="field">
+                <label>Proveedor</label>
+                <input name="provider" list="proveedores-inv" defaultValue="PROSEALMASTER" />
+                <datalist id="proveedores-inv">
+                  <option value="PROSEALMASTER" />
+                  <option value="Kánuh (nacional)" />
+                  <option value="Chovatek (nacional)" />
+                  <option value="Nacional" />
+                  <option value="Importado" />
+                </datalist>
+              </div>
+            </div>
+            <button className="btn primary" type="submit">
+              Crear producto
+            </button>
+            <span className="mini" style={{ marginLeft: 10 }}>
+              La acción queda registrada en la bitácora y auditoría.
+            </span>
+          </form>
+        </details>
+      )}
 
       <div className="grid-4" style={{ marginBottom: 14 }}>
         <div className="card kpi">

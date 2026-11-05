@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { getActiveUnitId, isCentralLike, type SessionUser } from '@/lib/session';
-
-const MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash';
+import { getActiveUnitId, type SessionUser } from '@/lib/session';
+import { askGemini } from '@/lib/gemini';
 
 function fmtMoney(n: number) {
   return '$' + Math.round(n || 0).toLocaleString('es-MX');
@@ -57,12 +56,19 @@ async function buildContext(user: SessionUser, unitId: string | null) {
 
 function fallbackReply(message: string, context: string) {
   const q = message.toLowerCase();
-  if (/cobr|debe|adeuda/.test(q)) return 'Revisa el módulo Cobrar para ver facturas, vencidos y registrar recordatorios. La cobranza pendiente está en el contexto del sistema.';
+  if (/cobr|debe|adeuda/.test(q)) return 'Revisa el módulo Cobrar para ver facturas, vencidos y registrar recordatorios. Ahí está la cobranza pendiente.';
   if (/cotiz|m2|m²|precio/.test(q)) return 'Abre Cotizar: el wizard calcula área desarrollada, costos, margen contra el piso y valida antes de enviar. También puedes usar la barra de comandos.';
-  if (/franquicia|regal|red/.test(q)) return 'En Franquicias están las unidades y reglas de red; en Central se registran ventas timbradas, regalías 6%+2% y fees. La comisión del desarrollador se registra automáticamente.';
-  if (/factura|gasto|cfdi|xml/.test(q)) return 'En Caja puedes capturar gastos o subir XML CFDI; los UUID duplicados se bloquean y requiere dos revisiones humanas.';
+  if (/franquicia|regal|red/.test(q)) return 'En Franquicias están las unidades y reglas de red; en Central se registran ventas timbradas, regalías 6%+2% y fees. La comisión del 20% se registra automáticamente.';
+  if (/factura|gasto|cfdi|xml/.test(q)) return 'En Caja puedes capturar gastos o subir XML CFDI; los UUID duplicados se bloquean y requiere revisión de Administración y Gerencia.';
   if (/obra|ot|fase/.test(q)) return 'En Obra/OT avanzas fases con evidencia, controlas consumo teórico vs real y entregas con garantía digital.';
-  return 'No tengo la IA conectada en este momento. Puedo guiarte: Hoy, Cotizar, Propuesta viva, Obra, Caja, Cobrar, Franquicias, Central y Catálogo.';
+
+  const summary = context
+    .split('\n')
+    .filter((l) => /^(Catálogo|Ventas\/CRM|Cobranza|Documentos|Inventario|Red):/.test(l))
+    .slice(0, 4)
+    .join('\n');
+
+  return `Te guío mientras la IA vuelve:\n${summary}\n\nPuedes preguntarme por Cobrar, Cotizar, Obra, Caja, Franquicias o Central.`;
 }
 
 export async function POST(request: Request) {
@@ -98,11 +104,6 @@ export async function POST(request: Request) {
     context = 'Contexto no disponible (error de base de datos).';
   }
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    return NextResponse.json({ reply: fallbackReply(message, context), mode: 'fallback' });
-  }
-
   const system = [
     'Eres el asistente de IMPERTODO AI OS, plataforma de impermeabilización (Torreón, México).',
     'Responde en español, breve (máximo 130 palabras), directo y útil.',
@@ -118,51 +119,22 @@ export async function POST(request: Request) {
     context
   ].join('\n');
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: `${system}\n\nPREGUNTA DEL USUARIO:\n${message}` }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 900,
-            thinkingConfig: { thinkingBudget: 0 }
-          }
-        })
-      }
-    );
+  const result = await askGemini(system, `PREGUNTA DEL USUARIO:\n${message}`, 900);
 
-    if (!res.ok) {
-      if (res.status === 429) {
-        return NextResponse.json({
-          reply: 'La IA está ocupada por un momento. Mientras tanto: ' + fallbackReply(message, context),
-          mode: 'fallback'
-        });
-      }
-      return NextResponse.json({ reply: fallbackReply(message, context), mode: 'fallback' });
-    }
-
-    const json = await res.json();
-    const parts = json.candidates?.[0]?.content?.parts || [];
-    const text = parts
-      .filter((p: { text?: string; thought?: boolean }) => p.text && !p.thought)
-      .map((p: { text: string }) => p.text)
-      .join('')
-      .trim();
-
-    const clean = text
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/__(.*?)__/g, '$1')
-      .replace(/`{1,3}/g, '')
-      .replace(/^#{1,6}\s+/gm, '')
-      .replace(/^\s*[*-]\s+/gm, '• ')
-      .trim();
-
-    return NextResponse.json({ reply: clean || fallbackReply(message, context), mode: clean ? 'gemini' : 'fallback' });
-  } catch {
-    return NextResponse.json({ reply: fallbackReply(message, context), mode: 'fallback' });
+  if (result.text) {
+    return NextResponse.json({ reply: result.text, mode: 'gemini' });
   }
+
+  const prefix =
+    result.reason === 'quota'
+      ? 'La IA está en pausa por cuota un momento. '
+      : result.reason === 'no-key'
+        ? 'La IA no está configurada en este entorno. '
+        : 'No pude conectar con la IA. ';
+
+  return NextResponse.json({
+    reply: prefix + fallbackReply(message, context),
+    mode: 'fallback',
+    reason: result.reason
+  });
 }
