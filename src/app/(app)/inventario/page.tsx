@@ -4,9 +4,13 @@ import { fmt } from '@/lib/constants';
 import { inventoryImage, inventorySvg } from '@/lib/images';
 import SmartImage from '@/components/SmartImage';
 import Link from 'next/link';
-import { addStockAction, suggestOrderAction, createProductAction } from './actions';
+import { addStockAction, suggestOrderAction, createProductAction, updateProductAction, deleteProductAction } from './actions';
 
-export default async function InventarioPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
+export default async function InventarioPage({
+  searchParams
+}: {
+  searchParams: Promise<{ msg?: string; err?: string; edit?: string; del?: string }>;
+}) {
   const user = await requireUser();
   const sp = await searchParams;
   const canCreate = ['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role);
@@ -16,6 +20,8 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
   const factor = settings?.provider === 'psm' ? 0.7 : 1;
   const value = items.reduce((x, i) => x + i.stock * i.cost * factor, 0);
   const low = items.filter((i) => i.stock < i.min);
+  const editing = sp.edit ? items.find((i) => i.id === sp.edit) : undefined;
+  const deleting = sp.del ? items.find((i) => i.id === sp.del) : undefined;
 
   return (
     <>
@@ -29,9 +35,77 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
       {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado.</div>}
       {sp.msg === 'pedido' && <div className="alert g">Pedido propuesto creado y avisado en la bandeja interna.</div>}
       {sp.msg === 'creado' && <div className="alert g">Producto creado y registrado en la bitácora y auditoría.</div>}
+      {sp.msg === 'editado' && <div className="alert g">Producto actualizado y registrado en la bitácora.</div>}
+      {sp.msg === 'eliminado' && <div className="alert g">Producto eliminado (con sus movimientos) y registrado en la bitácora.</div>}
       {sp.err === 'rol' && <div className="alert r">Solo Administración, Central, Gerencia o el desarrollador pueden crear productos.</div>}
       {sp.err === 'alta' && <div className="alert r">Completa al menos el nombre del producto.</div>}
       {sp.err === 'datos' && <div className="alert r">Cantidad inválida.</div>}
+      {sp.err === 'noexiste' && <div className="alert r">Ese producto ya no existe.</div>}
+
+      {editing && canCreate && (
+        <div className="card panel" style={{ marginBottom: 14, borderColor: 'var(--azul-100)' }}>
+          <div className="sec">Editar producto · {editing.name}</div>
+          <form action={updateProductAction}>
+            <input type="hidden" name="id" value={editing.id} />
+            <div className="row3">
+              <div className="field">
+                <label>Nombre</label>
+                <input name="name" defaultValue={editing.name} required />
+              </div>
+              <div className="field">
+                <label>Unidad</label>
+                <input name="unitName" list="unidades-inv" defaultValue={editing.unitName} required />
+              </div>
+              <div className="field">
+                <label>Mínimo</label>
+                <input name="min" type="number" min="0" step="1" defaultValue={editing.min} />
+              </div>
+              <div className="field">
+                <label>Costo unitario (MXN)</label>
+                <input name="cost" type="number" min="0" step="0.01" defaultValue={editing.cost} />
+              </div>
+              <div className="field">
+                <label>Proveedor</label>
+                <input name="provider" list="proveedores-inv" defaultValue={editing.provider} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn primary" type="submit">
+                Guardar cambios
+              </button>
+              <Link className="btn" href="/inventario">
+                Cancelar
+              </Link>
+            </div>
+            <div className="mini" style={{ marginTop: 8 }}>
+              El stock se ajusta con “+ Entrada” o salidas directas en la tabla, para que quede el movimiento registrado.
+            </div>
+          </form>
+        </div>
+      )}
+
+      {deleting && canCreate && (
+        <div className="card panel" style={{ marginBottom: 14 }}>
+          <div className="sec" style={{ color: 'var(--rojo)' }}>
+            Eliminar producto
+          </div>
+          <p className="mini" style={{ marginBottom: 10 }}>
+            Vas a eliminar <b>{deleting.name}</b> (stock {deleting.stock} {deleting.unitName}) y sus movimientos. Esta acción
+            queda en la bitácora y no se puede deshacer.
+          </p>
+          <form action={deleteProductAction}>
+            <input type="hidden" name="id" value={deleting.id} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" type="submit" style={{ background: 'var(--rojo)', color: '#fff', borderColor: 'transparent' }}>
+                Confirmar eliminación
+              </button>
+              <Link className="btn" href="/inventario">
+                Cancelar
+              </Link>
+            </div>
+          </form>
+        </div>
+      )}
 
       {canCreate && (
         <details className="card panel" style={{ marginBottom: 14 }}>
@@ -124,6 +198,7 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
               <th>Estado</th>
               <th className="num">Pedido propuesto</th>
               <th>Movimiento</th>
+              {canCreate && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -167,6 +242,18 @@ export default async function InventarioPage({ searchParams }: { searchParams: P
                       )}
                     </div>
                   </td>
+                  {canCreate && (
+                    <td>
+                      <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                        <Link className="btn sm" href={`/inventario?edit=${i.id}`} title="Editar producto">
+                          ✎ Editar
+                        </Link>
+                        <Link className="btn sm" style={{ color: 'var(--rojo)' }} href={`/inventario?del=${i.id}`} title="Eliminar producto">
+                          🗑
+                        </Link>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}

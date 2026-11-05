@@ -71,3 +71,43 @@ export async function createProductAction(formData: FormData) {
   revalidatePath('/agentes');
   redirect('/inventario?msg=creado');
 }
+
+export async function updateProductAction(formData: FormData) {
+  const user = await requireUser();
+  if (!['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role)) redirect('/inventario?err=rol');
+
+  const id = String(formData.get('id') || '');
+  const item = await prisma.inventoryItem.findUnique({ where: { id } });
+  if (!item) redirect('/inventario?err=noexiste');
+
+  const name = String(formData.get('name') || '').trim();
+  if (!name) redirect(`/inventario?edit=${id}&err=alta`);
+  const unitName = String(formData.get('unitName') || '').trim() || item.unitName;
+  const min = Math.max(0, parseFloat(String(formData.get('min') || String(item.min))) || item.min);
+  const cost = Math.max(0, parseFloat(String(formData.get('cost') || String(item.cost))) || item.cost);
+  const provider = String(formData.get('provider') || '').trim() || item.provider;
+
+  await prisma.inventoryItem.update({ where: { id }, data: { name, unitName, min, cost, provider } });
+  await logAudit(user, 'Producto editado', `${name} · unidad ${unitName} · mínimo ${min} · costo ${cost} · ${provider}`);
+
+  revalidatePath('/inventario');
+  revalidatePath('/hoy');
+  redirect('/inventario?msg=editado');
+}
+
+export async function deleteProductAction(formData: FormData) {
+  const user = await requireUser();
+  if (!['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role)) redirect('/inventario?err=rol');
+
+  const id = String(formData.get('id') || '');
+  const item = await prisma.inventoryItem.findUnique({ where: { id } });
+  if (!item) redirect('/inventario?err=noexiste');
+
+  await prisma.stockMovement.deleteMany({ where: { itemId: id } });
+  await prisma.inventoryItem.delete({ where: { id } });
+  await logAudit(user, 'Producto eliminado', `${item.name} · stock al eliminar ${item.stock} ${item.unitName}`);
+
+  revalidatePath('/inventario');
+  revalidatePath('/hoy');
+  redirect('/inventario?msg=eliminado');
+}
