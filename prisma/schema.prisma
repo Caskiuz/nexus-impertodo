@@ -220,6 +220,7 @@ model InventoryItem {
   unitName  String
   cost      Float
   provider  String
+  photo     String?
   updatedAt DateTime @updatedAt
 }
 

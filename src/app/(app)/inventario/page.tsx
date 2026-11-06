@@ -3,13 +3,14 @@ import { requireUser } from '@/lib/session';
 import { fmt } from '@/lib/constants';
 import { inventoryImage, inventorySvg } from '@/lib/images';
 import SmartImage from '@/components/SmartImage';
+import ProductPhotoManager from '@/components/ProductPhotoManager';
 import Link from 'next/link';
 import { addStockAction, suggestOrderAction, createProductAction, updateProductAction, deleteProductAction } from './actions';
 
 export default async function InventarioPage({
   searchParams
 }: {
-  searchParams: Promise<{ msg?: string; err?: string; edit?: string; del?: string }>;
+  searchParams: Promise<{ msg?: string; err?: string; edit?: string; del?: string; foto?: string }>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
@@ -22,6 +23,7 @@ export default async function InventarioPage({
   const low = items.filter((i) => i.stock < i.min);
   const editing = sp.edit ? items.find((i) => i.id === sp.edit) : undefined;
   const deleting = sp.del ? items.find((i) => i.id === sp.del) : undefined;
+  const photoItem = sp.foto ? items.find((i) => i.id === sp.foto) : undefined;
 
   return (
     <>
@@ -81,6 +83,16 @@ export default async function InventarioPage({
               El stock se ajusta con “+ Entrada” o salidas directas en la tabla, para que quede el movimiento registrado.
             </div>
           </form>
+        </div>
+      )}
+
+      {photoItem && canCreate && (
+        <div className="card panel" style={{ marginBottom: 14, borderColor: 'var(--azul-100)' }}>
+          <div className="sec">Foto del producto · {photoItem.name}</div>
+          <ProductPhotoManager itemId={photoItem.id} name={photoItem.name} current={photoItem.photo} />
+          <Link className="btn" href="/inventario" style={{ marginTop: 10 }}>
+            Cerrar
+          </Link>
         </div>
       )}
 
@@ -209,7 +221,12 @@ export default async function InventarioPage({
                 <tr key={i.id}>
                   <td>
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                      <SmartImage className="img-thumb" src={inventoryImage(i.name, 480)} fallback={inventorySvg(i.name)} alt={i.name} />
+                      <SmartImage
+                        className="img-thumb"
+                        src={i.photo || inventoryImage(i.name, 480)}
+                        fallback={inventorySvg(i.name)}
+                        alt={i.name}
+                      />
                       <b>{i.name}</b>
                     </div>
                   </td>
@@ -245,6 +262,9 @@ export default async function InventarioPage({
                   {canCreate && (
                     <td>
                       <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                        <Link className="btn sm" href={`/inventario?foto=${i.id}`} title="Foto del producto">
+                          📷
+                        </Link>
                         <Link className="btn sm" href={`/inventario?edit=${i.id}`} title="Editar producto">
                           ✎ Editar
                         </Link>
