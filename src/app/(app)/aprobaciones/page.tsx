@@ -3,6 +3,7 @@ import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt } from '@/lib/constants';
 import { approveQuoteAction } from '@/actions/quotes';
 import { reviewDocAction, authorizeDocAction, rejectDocAction } from '@/actions/docs';
+import ModuleExplainer from '@/components/ModuleExplainer';
 
 export default async function AprobacionesPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
   const user = await requireUser();
@@ -43,6 +44,16 @@ export default async function AprobacionesPage({ searchParams }: { searchParams:
       </div>
       {sp.msg && <div className="alert g">{messages[sp.msg] || 'Listo.'}</div>}
       {sp.err && <div className="alert r">{errors[sp.err] || 'Acción no permitida.'}</div>}
+
+      <ModuleExplainer
+        points={[
+          'Es la doble llave del negocio: nada importante se ejecuta con una sola persona. Administración verifica primero y Gerencia autoriza después.',
+          'Cotizaciones: Administración revisa y Gerencia autoriza. Si la cotización no tiene ficha de costos documentada, la autorización de Gerencia está bloqueada.',
+          'Al autorizar Gerencia una cotización se genera la orden de trabajo (OT) automáticamente en Obra y el prospecto pasa a "Ganado".',
+          'Comprobantes (CFDI y tickets de Caja): mismo flujo. Los avisos (UUID duplicado, lista 69-B, sin RFC) se muestran pero solo informan: no bloquean.',
+          'Te sirve si: quieres controlar descuentos y gastos sin detener el flujo — cada quien firma su parte desde su celular y todo queda en bitácora.'
+        ]}
+      />
 
       <div className="flow" style={{ marginBottom: 15 }}>
         <span>Empleado carga</span>

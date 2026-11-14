@@ -29,6 +29,12 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
 
       <details className="card panel" style={{ marginBottom: 15 }}>
         <summary style={{ cursor: 'pointer', fontWeight: 800, color: 'var(--azul-700)' }}>+ Prospecto (20 segundos)</summary>
+        <div className="alert b" style={{ marginTop: 12 }}>
+          <b>¿Qué es un prospecto?</b> Es un cliente potencial que todavía no compra. Solo capturas lo mínimo (empresa, contacto y m²
+          aproximados) para no perder el dato: en 20 segundos queda en el embudo de abajo con su etapa. Cuando le cotizas y gana la obra,
+          ese prospecto se convierte en cliente y su techo queda registrado como activo con garantía. Sin prospecto, lo que no se anota se
+          olvida.
+        </div>
         <form action={createLeadAction} style={{ marginTop: 12 }}>
           <div className="row3">
             <div className="field">
@@ -103,7 +109,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                     </div>
                     <div className="amt">{l.amount ? fmt(l.amount) : 'por cotizar'}</div>
                     <div className="mini" style={{ marginTop: 4 }}>
-                      {l.nextAction} · {l.daysInStage} d
+                      <b>Status:</b> {STAGES[l.stage]} · {l.daysInStage} d en etapa
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                       <Link className="btn sm" href={`/cotizar?client=${encodeURIComponent(l.company)}&area=${l.area || ''}`}>
@@ -135,12 +141,22 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
               <th className="num">Activos</th>
               <th className="num">m² bajo garantía</th>
               <th className="num">Cotizaciones</th>
-              <th>Próxima acción</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {clients.map((c) => {
               const warrantyArea = c.assets.reduce((x, a) => x + (a.area || 0), 0);
+              // Status de la cuenta según la garantía más próxima a vencer de sus techos.
+              const warranties = c.assets.map((a) => a.warrantyUntil).filter((w): w is Date => Boolean(w));
+              const soonest = warranties.length ? warranties.reduce((a, b) => (a < b ? a : b)) : null;
+              const monthsLeft = soonest ? Math.round((soonest.getTime() - Date.now()) / (30 * 86400000)) : null;
+              const status =
+                monthsLeft === null
+                  ? { text: 'Sin garantía · seguimiento', cls: 'info' }
+                  : monthsLeft <= 3
+                    ? { text: `Garantía por vencer (${monthsLeft} m) · renovar`, cls: 'warn' }
+                    : { text: `Garantía vigente · ${monthsLeft} m`, cls: 'ok' };
               return (
                 <tr key={c.id}>
                   <td>
@@ -151,7 +167,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                   <td className="num">{warrantyArea ? warrantyArea.toLocaleString('es-MX') : '—'}</td>
                   <td className="num">{c.quotes.length}</td>
                   <td>
-                    <span className="badge info">{c.assets[0]?.note || 'Seguimiento'}</span>
+                    <span className={`badge ${status.cls}`}>{status.text}</span>
                   </td>
                 </tr>
               );

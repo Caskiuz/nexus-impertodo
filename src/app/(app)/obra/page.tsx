@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
 import { markPhaseAction, setRealMaterialAction, deliverAction } from './actions';
+import ModuleExplainer from '@/components/ModuleExplainer';
+import PortfolioUploader from '@/components/PortfolioUploader';
 
 const PHASES_BY_UNIT: Record<string, string[]> = {
   L: ['Limpieza e hidrolavado', 'Sellador / primer', 'Sellado de grietas y detalles', '1ª capa', 'Membrana de refuerzo', '2ª capa y entrega'],
@@ -14,7 +16,7 @@ export default async function ObraPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const unitId = await getActiveUnitId(user);
   const scope = unitId ? { unitId } : {};
-  const ots = await prisma.oT.findMany({ where: scope, orderBy: { createdAt: 'desc' }, include: { photos: true } });
+  const ots = await prisma.oT.findMany({ where: scope, orderBy: { createdAt: 'desc' }, include: { photos: true, quote: { select: { element: true } } } });
   const selected = sp.ot ? ots.find((o) => o.code === sp.ot) || ots[0] : ots[0];
 
   const sys = selected ? await prisma.system.findUnique({ where: { key: selected.systemKey } }) : null;
@@ -42,6 +44,16 @@ export default async function ObraPage({ searchParams }: { searchParams: Promise
       {sp.msg === 'fase' && <div className="alert g">Fase registrada con evidencia fotográfica y consumo teórico descontado.</div>}
       {sp.msg === 'entregada' && <div className="alert g">Obra entregada: garantía digital emitida y expediente cerrado.</div>}
       {sp.err === 'fases' && <div className="alert r">No se puede entregar: faltan fases por completar.</div>}
+
+      <ModuleExplainer
+        points={[
+          'Una OT (orden de trabajo) nace automáticamente cuando Gerencia autoriza una cotización en Aprobaciones: no se crea a mano ni se puede capturar aquí.',
+          'Cada OT se divide en fases según el sistema (acrílico 6 fases, rollo SBS 7, poliuretano 4). El supervisor marca cada fase con foto: eso avanza el % de obra.',
+          'Al marcar fases se va registrando el material real usado contra el teórico de la cotización: si la merma pasa del 2% se pone en rojo para revisarla.',
+          'Al completar todas las fases se entrega la obra y se genera la garantía digital por techo: queda como activo del cliente en Clientes & Techos.',
+          'Te sirve si: quieres saber en qué va cada obra, cuánto material lleva gastado y que la garantía quede registrada sin papeleo.'
+        ]}
+      />
 
       {!selected ? (
         <div className="alert y">No hay órdenes de trabajo. Aprueba una cotización para generarlas.</div>
@@ -183,6 +195,15 @@ export default async function ObraPage({ searchParams }: { searchParams: Promise
                 <div className="g">J<b>30°</b></div>
               </div>
               <div className="mini" style={{ marginTop: 8 }}>Lunes–martes sin aplicación: el agente propone reprogramar y avisa al cliente.</div>
+            </div>
+
+            <div className="card panel">
+              <div className="sec">Evidencia para el portafolio <span className="badge info">antes / después</span></div>
+              <div className="mini" style={{ marginBottom: 8 }}>
+                Sube la foto del ANTES (techo dañado) y la del DESPUÉS (obra terminada) de <b>{selected.clientName}</b> y publícala en el
+                portafolio para vender con trabajos reales.
+              </div>
+              <PortfolioUploader clientName={selected.clientName} element={selected.quote?.element} otCode={selected.code} />
             </div>
           </div>
         </div>

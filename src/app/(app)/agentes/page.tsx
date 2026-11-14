@@ -3,6 +3,7 @@ import { requireUser, getActiveUnitId } from '@/lib/session';
 import { fmt, dateStr } from '@/lib/constants';
 import AgentCards from '@/components/AgentCards';
 import PriorityAI from '@/components/PriorityAI';
+import ModuleExplainer from '@/components/ModuleExplainer';
 
 export default async function AgentesPage() {
   const user = await requireUser();
@@ -42,6 +43,16 @@ export default async function AgentesPage() {
           <div className="sub">Trabajan con reglas sobre tus datos reales. Sugieren; el humano aprueba. Nunca envían, pagan ni contabilizan solos.</div>
         </div>
       </div>
+
+      <ModuleExplainer
+        points={[
+          'Son 6 asistentes que revisan tus datos reales (cotizaciones viejas, márgenes bajos, inventario, licitaciones) y te dicen qué merece atención hoy: cada uno propone 3–5 acciones concretas.',
+          'Documentos vigila comprobantes · Comercial vigila el embudo de clientes · Técnico revisa coherencia de la propuesta · Financiero cuida márgenes · Compras vigila el stock · Licitaciones rastrea convocatorias.',
+          'Regla de oro: la IA solo sugiere, nunca ejecuta. No envía mensajes, no paga, no autoriza — tú decides qué hacer con cada recomendación.',
+          'Sin API key funcionan con reglas fijas sobre la base de datos (costo $0). Con GEMINI_API_KEY configurada, el análisis es de lenguaje natural.',
+          'Te sirve si: quieres empezar el día sabiendo qué atender sin abrir módulo por módulo — pulsa una tarjeta y lee sus recomendaciones.'
+        ]}
+      />
 
       <AgentCards />
 

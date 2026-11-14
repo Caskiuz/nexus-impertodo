@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { fmt, dateStr, periodOf } from '@/lib/constants';
+import ModuleExplainer from '@/components/ModuleExplainer';
 import {
   registerSaleAction,
   calculateRoyaltyAction,
@@ -50,6 +51,16 @@ export default async function CentralPage({ searchParams }: { searchParams: Prom
       </div>
       {sp.msg && <div className="alert g">{messages[sp.msg] || 'Listo.'}</div>}
       {sp.err && <div className="alert r">{errors[sp.err] || 'Error.'}</div>}
+
+      <ModuleExplainer
+        points={[
+          'Es el módulo de la red de franquicias: la vista del desarrollador sobre todas las unidades (Torreón matriz, Monterrey piloto, etc.).',
+          'Cada unidad registra sus ventas timbradas; de ahí se calcula la regalía 6% + marketing 2% y el fee tecnológico mensual por período.',
+          'Sobre esos ingresos de la red se devenga tu comisión de desarrollador 20% (configurable), que aparece en "Mi comisión 20%".',
+          'También sirve para vender producto PROSEALMASTER a las unidades (pedido de producto = comisión) y evaluar nuevas franquicias.',
+          'Te sirve si: vas a escalar el negocio a más unidades — es el tablero donde la red te paga, venta por venta.'
+        ]}
+      />
 
       <div className="grid-4" style={{ marginBottom: 14 }}>
         <div className="card kpi">
