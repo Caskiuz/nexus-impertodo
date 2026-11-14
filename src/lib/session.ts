@@ -54,8 +54,8 @@ export async function activeUnitFilter(user: SessionUser): Promise<string | null
   return getActiveUnitId(user);
 }
 
-export async function logAudit(user: SessionUser | null, action: string, ref?: string) {
+export async function logAudit(user: SessionUser | null, action: string, ref?: string, module?: string) {
   await prisma.auditLog.create({
-    data: { userId: user?.id, userName: user?.name, role: user?.role, action, ref: ref ?? null }
+    data: { userId: user?.id, userName: user?.name, role: user?.role, action, ref: ref ?? null, module: module ?? null }
   });
 }

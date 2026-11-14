@@ -10,13 +10,18 @@ import { addStockAction, suggestOrderAction, createProductAction, updateProductA
 export default async function InventarioPage({
   searchParams
 }: {
-  searchParams: Promise<{ msg?: string; err?: string; edit?: string; del?: string; foto?: string }>;
+  searchParams: Promise<{ msg?: string; err?: string; edit?: string; del?: string; foto?: string; item?: string }>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
+  // Modificación de datos maestros (editar/eliminar/foto): solo Gerencia y el desarrollador.
+  const canEdit = ['GERENCIA', 'DEV'].includes(user.role);
+  // Alta de productos nuevos y movimientos de stock: como antes.
   const canCreate = ['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'].includes(user.role);
   const settings = await prisma.settings.findUnique({ where: { id: 'default' } });
   const items = await prisma.inventoryItem.findMany({ orderBy: { name: 'asc' } });
+  const movementsRaw = await prisma.stockMovement.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+  const audit = await prisma.auditLog.findMany({ where: { module: 'inventario' }, orderBy: { createdAt: 'desc' }, take: 20 });
 
   const factor = settings?.provider === 'psm' ? 0.7 : 1;
   const value = items.reduce((x, i) => x + i.stock * i.cost * factor, 0);
@@ -25,26 +30,33 @@ export default async function InventarioPage({
   const deleting = sp.del ? items.find((i) => i.id === sp.del) : undefined;
   const photoItem = sp.foto ? items.find((i) => i.id === sp.foto) : undefined;
 
+  const itemMap = new Map(items.map((i) => [i.id, i]));
+  const movements = sp.item ? movementsRaw.filter((m) => m.itemId === sp.item) : movementsRaw;
+  const filterItem = sp.item ? itemMap.get(sp.item) : undefined;
+
   return (
     <>
       <div className="head">
         <div>
           <div className="eyebrow">Almacén</div>
           <h1>Inventario PROSEALMASTER</h1>
-          <div className="sub">Stock, mínimos y pedido propuesto. La compra es exclusiva PROSEALMASTER: se ve precio de compra, no landed.</div>
+          <div className="sub">
+            Stock, mínimos y pedido propuesto. Los datos maestros solo los modifican Gerencia y el desarrollador; todo queda en bitácora.
+          </div>
         </div>
       </div>
-      {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado.</div>}
+      {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado con su documento y saldo.</div>}
       {sp.msg === 'pedido' && <div className="alert g">Pedido propuesto creado y avisado en la bandeja interna.</div>}
       {sp.msg === 'creado' && <div className="alert g">Producto creado y registrado en la bitácora y auditoría.</div>}
-      {sp.msg === 'editado' && <div className="alert g">Producto actualizado y registrado en la bitácora.</div>}
+      {sp.msg === 'editado' && <div className="alert g">Producto actualizado: la bitácora de abajo registra qué cambió (antes → después).</div>}
       {sp.msg === 'eliminado' && <div className="alert g">Producto eliminado (con sus movimientos) y registrado en la bitácora.</div>}
+      {sp.err === 'autoriza' && <div className="alert r">Solo Gerencia o el desarrollador pueden modificar o eliminar datos del inventario.</div>}
       {sp.err === 'rol' && <div className="alert r">Solo Administración, Central, Gerencia o el desarrollador pueden crear productos.</div>}
       {sp.err === 'alta' && <div className="alert r">Completa al menos el nombre del producto.</div>}
       {sp.err === 'datos' && <div className="alert r">Cantidad inválida.</div>}
       {sp.err === 'noexiste' && <div className="alert r">Ese producto ya no existe.</div>}
 
-      {editing && canCreate && (
+      {editing && canEdit && (
         <div className="card panel" style={{ marginBottom: 14, borderColor: 'var(--azul-100)' }}>
           <div className="sec">Editar producto · {editing.name}</div>
           <form action={updateProductAction}>
@@ -80,13 +92,14 @@ export default async function InventarioPage({
               </Link>
             </div>
             <div className="mini" style={{ marginTop: 8 }}>
-              El stock se ajusta con “+ Entrada” o salidas directas en la tabla, para que quede el movimiento registrado.
+              El stock se ajusta con entradas/salidas en la tabla, para que quede el movimiento registrado. Cada cambio queda en la bitácora
+              con antes → después.
             </div>
           </form>
         </div>
       )}
 
-      {photoItem && canCreate && (
+      {photoItem && canEdit && (
         <div className="card panel" style={{ marginBottom: 14, borderColor: 'var(--azul-100)' }}>
           <div className="sec">Foto del producto · {photoItem.name}</div>
           <ProductPhotoManager itemId={photoItem.id} name={photoItem.name} current={photoItem.photo} />
@@ -96,7 +109,7 @@ export default async function InventarioPage({
         </div>
       )}
 
-      {deleting && canCreate && (
+      {deleting && canEdit && (
         <div className="card panel" style={{ marginBottom: 14 }}>
           <div className="sec" style={{ color: 'var(--rojo)' }}>
             Eliminar producto
@@ -210,7 +223,7 @@ export default async function InventarioPage({
               <th>Estado</th>
               <th className="num">Pedido propuesto</th>
               <th>Movimiento</th>
-              {canCreate && <th>Acciones</th>}
+              {canEdit && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -241,25 +254,28 @@ export default async function InventarioPage({
                   </td>
                   <td className="num">{suggested ? <b>{suggested} {i.unitName}</b> : '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                      <form action={addStockAction} style={{ display: 'flex', gap: 4 }}>
+                    <form action={addStockAction} style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input type="hidden" name="itemId" value={i.id} />
+                      <input type="number" name="qty" defaultValue={i.min} min="0" step="0.01" style={{ width: 62 }} aria-label="Cantidad" required />
+                      <select name="kind" defaultValue="ENTRADA" style={{ maxWidth: 96 }} aria-label="Tipo de movimiento">
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SALIDA">Salida</option>
+                      </select>
+                      <input name="docRef" placeholder="Factura / remisión" style={{ width: 132 }} aria-label="Factura o remisión" />
+                      <button className="btn sm" type="submit">
+                        Registrar
+                      </button>
+                    </form>
+                    {suggested > 0 && (
+                      <form action={suggestOrderAction} style={{ marginTop: 4 }}>
                         <input type="hidden" name="itemId" value={i.id} />
-                        <input type="number" name="qty" defaultValue={i.min} style={{ width: 64 }} aria-label="Cantidad" />
-                        <button className="btn sm" type="submit">
-                          + Entrada
+                        <button className="btn sm primary" type="submit">
+                          Pedir
                         </button>
                       </form>
-                      {suggested > 0 && (
-                        <form action={suggestOrderAction}>
-                          <input type="hidden" name="itemId" value={i.id} />
-                          <button className="btn sm primary" type="submit">
-                            Pedir
-                          </button>
-                        </form>
-                      )}
-                    </div>
+                    )}
                   </td>
-                  {canCreate && (
+                  {canEdit && (
                     <td>
                       <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
                         <Link className="btn sm" href={`/inventario?foto=${i.id}`} title="Foto del producto">
@@ -279,7 +295,106 @@ export default async function InventarioPage({
             })}
           </tbody>
         </table>
+        {!canEdit && (
+          <div className="mini" style={{ padding: '8px 14px' }}>
+            Modo consulta: puedes registrar entradas y salidas, pero los datos maestros (nombre, costo, mínimo, proveedor, foto y
+            eliminación) solo los cambia Gerencia o el desarrollador.
+          </div>
+        )}
       </div>
+
+      <div className="card tbl" style={{ marginTop: 14 }}>
+        <div className="sec" style={{ padding: '14px 14px 0' }}>
+          Movimientos del inventario <span className="badge">fecha · documento · entrada/salida · saldo</span>
+        </div>
+        <div className="mini" style={{ padding: '4px 14px 8px' }}>
+          Desglose de cada movimiento: la factura o remisión que lo respalda, el usuario que lo registró y el saldo que dejó. Filtro:{' '}
+          <Link href="/inventario">todos</Link>
+          {items.slice(0, 8).map((i) => (
+            <span key={i.id}>
+              {' · '}
+              <Link href={`/inventario?item=${i.id}`}>{i.name.split(' ').slice(0, 2).join(' ')}</Link>
+            </span>
+          ))}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Tipo</th>
+              <th className="num">Cantidad</th>
+              <th className="num">Saldo</th>
+              <th>Factura / remisión</th>
+              <th>Motivo</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            {movements.map((m) => {
+              const it = itemMap.get(m.itemId);
+              return (
+                <tr key={m.id}>
+                  <td>
+                    {m.createdAt.toLocaleDateString('es-MX')}{' '}
+                    <span className="mini">{m.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </td>
+                  <td>
+                    <b>{it?.name || 'Producto eliminado'}</b>
+                  </td>
+                  <td>
+                    <span className={`badge ${m.type === 'ENTRADA' ? 'ok' : 'warn'}`}>{m.type}</span>
+                  </td>
+                  <td className="num">
+                    {m.type === 'ENTRADA' ? '+' : '−'}
+                    {Math.abs(m.qty)} {it?.unitName || ''}
+                  </td>
+                  <td className="num">{m.balance ?? '—'}</td>
+                  <td>{m.docRef || '—'}</td>
+                  <td className="mini">
+                    {m.reason}
+                    {m.otCode ? ` · ${m.otCode}` : ''}
+                  </td>
+                  <td className="mini">{m.userName || '—'}</td>
+                </tr>
+              );
+            })}
+            {!movements.length && (
+              <tr>
+                <td colSpan={8} className="mini">
+                  Sin movimientos registrados todavía. Registra la primera entrada o salida desde la tabla de arriba (últimos 50
+                  movimientos se muestran aquí).
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        {filterItem && (
+          <div className="mini" style={{ padding: '8px 14px' }}>
+            Mostrando solo movimientos de <b>{filterItem.name}</b> · <Link href="/inventario">quitar filtro</Link>
+          </div>
+        )}
+      </div>
+
+      <div className="card panel" style={{ marginTop: 14 }}>
+        <div className="sec">
+          Bitácora de modificaciones <span className="badge">quién cambió qué, con antes → después</span>
+        </div>
+        {audit.map((a) => (
+          <div className="rule" key={a.id}>
+            <span className="ic info">i</span>
+            <div>
+              <b>{a.action}</b>
+              {a.ref && <div className="mini">{a.ref}</div>}
+              <div className="mini">
+                {a.createdAt.toLocaleString('es-MX')} · {a.userName || 'sistema'} · rol {a.role || '—'}
+              </div>
+            </div>
+          </div>
+        ))}
+        {!audit.length && <div className="mini">Sin modificaciones registradas todavía: cada alta, cambio o movimiento aparecerá aquí.</div>}
+      </div>
+
       <div className="mini" style={{ marginTop: 10 }}>
         El descuento por OT se registra al avanzar fases en Obra. La recepción real de material se captura aquí.
         <br />

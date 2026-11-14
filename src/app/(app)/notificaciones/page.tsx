@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
 import { dateStr } from '@/lib/constants';
+import Link from 'next/link';
 import { markNotificationReadAction, markAllNotificationsReadAction } from './actions';
+
+const PAGE_SIZE = 50;
 
 const kindLabel: Record<string, { label: string; cls: string }> = {
   SALE: { label: 'Venta', cls: 'ok' },
@@ -12,10 +15,19 @@ const kindLabel: Record<string, { label: string; cls: string }> = {
   SYSTEM: { label: 'Sistema', cls: '' }
 };
 
-export default async function NotificacionesPage() {
+export default async function NotificacionesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const user = await requireUser();
-  const notifications = await prisma.notification.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
-  const unread = notifications.filter((n) => !n.read).length;
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page || '1', 10) || 1);
+
+  const total = await prisma.notification.count();
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const notifications = await prisma.notification.findMany({
+    orderBy: { createdAt: 'desc' },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE
+  });
+  const unread = await prisma.notification.count({ where: { read: false } });
 
   return (
     <>
@@ -24,7 +36,8 @@ export default async function NotificacionesPage() {
           <div className="eyebrow">Bandeja interna · avisos del negocio</div>
           <h1>Notificaciones</h1>
           <div className="sub">
-            Aquí se registra cada venta, adquisición de franquicia, regalía y fee con la comisión estimada del desarrollador.
+            Aquí se registra cada venta, adquisición de franquicia, regalía y fee con la comisión estimada del desarrollador. El historial
+            antiguo no se borra: navega con los botones de abajo.
           </div>
         </div>
         <div className="actions">
@@ -60,8 +73,30 @@ export default async function NotificacionesPage() {
             </div>
           );
         })}
-        {!notifications.length && <div className="alert b">Sin avisos. Cuando ocurra una venta o franquicia aparecerá aquí.</div>}
+        {!notifications.length && <div className="alert b">Sin avisos en esta página. Cuando ocurra una venta o franquicia aparecerá aquí.</div>}
       </div>
+
+      {total > PAGE_SIZE && (
+        <div className="card panel" style={{ marginTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          {page > 1 ? (
+            <Link className="btn sm" href={`/notificaciones?page=${page - 1}`}>
+              ← Más recientes
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="mini">
+            Página {page} de {pages} · {total} avisos en el historial
+          </span>
+          {page < pages ? (
+            <Link className="btn sm" href={`/notificaciones?page=${page + 1}`}>
+              Más antiguas →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </div>
+      )}
 
       <div className="card panel" style={{ marginTop: 14 }}>
         <div className="sec">Regla de visibilidad</div>

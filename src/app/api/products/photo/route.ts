@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { logAudit } from '@/lib/session';
 
 const MAX_CHARS = 3_000_000; // ~2.2 MB de imagen tras compresión
-const ROLES = ['ADMIN', 'CENTRAL', 'DEV', 'GERENCIA'];
+// La foto es parte del registro del producto: modificarla requiere autorización (Gerencia/DEV).
+const ROLES = ['GERENCIA', 'DEV'];
 
 export async function POST(request: Request) {
   const session = await auth();
