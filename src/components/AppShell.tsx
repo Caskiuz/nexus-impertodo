@@ -41,6 +41,7 @@ export default function AppShell({
         { href: '/cotizar', icon: '🧠', label: 'Cotizar', roles: ['ADMIN', 'GERENCIA', 'SUPERVISOR', 'CENTRAL', 'DEV'] },
         { href: '/clientes', icon: '👥', label: 'Clientes & Techos' },
         { href: '/propuesta', icon: '📱', label: 'Propuesta viva' },
+        { href: '/portafolio', icon: '🖼️', label: 'Portafolio' },
         { href: '/captacion', icon: '📣', label: 'Marketing / Captación', roles: ['ADMIN', 'GERENCIA', 'CENTRAL', 'DEV'] }
       ]
     },
