@@ -128,6 +128,11 @@ model Quote {
   baj             Float    @default(0)
   dom             Float    @default(0)
   duc             Float    @default(0)
+  chaflan         Float    @default(0) // m² escritos a mano por el usuario (sin cálculo automático)
+  extraSections   Json?    // [{ p: Float, h: Float }] secciones extra de perímetro/altura
+  floors          Int      @default(1) // número de pisos del área
+  buildingHeight  Float    @default(0) // altura de edificio / trabajo (m)
+  difficultyNote  String?  // nota libre de dificultad
   verified        Boolean  @default(false)
   drainageOk      Boolean  @default(true)
   diagnosed       Boolean  @default(false)
@@ -228,7 +233,11 @@ model StockMovement {
   id        String   @id @default(cuid())
   itemId    String
   qty       Float
+  type      String   @default("ENTRADA") // ENTRADA | SALIDA
   reason    String
+  docRef    String?  // factura o remisión que respalda el movimiento
+  userName  String?
+  balance   Float?   // stock resultante tras el movimiento
   otCode    String?
   createdAt DateTime @default(now())
 }
@@ -385,6 +394,7 @@ model AuditLog {
   role      String?
   action    String
   ref       String?
+  module    String?  // 'inventario' | 'cotizar' | ... para filtrar bitácoras por módulo
   createdAt DateTime @default(now())
 }
 
@@ -394,4 +404,35 @@ model Settings {
   indirect Float    @default(8)
   provider String   @default("nac")
   updatedAt DateTime @updatedAt
+}
+
+model RadarEntry {
+  id        String   @id @default(cuid())
+  name      String
+  sector    String   @default("Comercial")
+  areaM2    Float?
+  notes     String?
+  score     Int      @default(0)
+  analysis  String?  // análisis de la IA (o reglas) sobre la cuenta
+  sequence  String?  // secuencia de contacto sugerida (3 toques)
+  createdAt DateTime @default(now())
+}
+
+model PortfolioEntry {
+  id         String   @id @default(cuid())
+  clientName String
+  element    String   @default("Losa de azotea no transitable")
+  title      String?
+  before     String?  // foto del antes (dataURL comprimido)
+  after      String?  // foto del después (dataURL comprimido)
+  otCode     String?
+  createdAt  DateTime @default(now())
+}
+
+model CollectionNote {
+  id         String   @id @default(cuid())
+  clientName String
+  note       String
+  userName   String?
+  createdAt  DateTime @default(now())
 }

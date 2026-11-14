@@ -97,7 +97,7 @@ async function main() {
 
   // ---------- Cotizaciones demo (motor real) ----------
   const baseInput: QuoteInput = {
-    planta: 1314.18, perim: 0, alt: 0, baj: 0, dom: 0, duc: 0,
+    planta: 1314.18, perim: 0, alt: 0, baj: 0, dom: 0, duc: 0, chaflan: 0, extraSections: [],
     optA: 'acr10', optB: 'sbs45', selected: 'A', priceMode: 'promo', marginTarget: 32,
     discount: 0, floor: 32, indirect: 8, provider: 'nac', access: '1', moving: 0,
     billing: true, extras: []
@@ -188,6 +188,32 @@ async function main() {
       { name: 'Membrana de refuerzo 1.05×100 m', stock: 4, min: 4, unitName: 'rollo', cost: 1100, provider: 'Nacional' },
       { name: 'Poliurea 2 comp. 20 kg (A+B)', stock: 0, min: 6, unitName: 'juego', cost: 3200, provider: 'Importado' }
     ]
+  });
+
+  const invItems = await prisma.inventoryItem.findMany();
+  const acrItem = invItems.find((i) => i.name.includes('Acrílico'));
+  const sbsItem = invItems.find((i) => i.name.includes('SBS'));
+  if (acrItem) {
+    await prisma.stockMovement.create({ data: { itemId: acrItem.id, qty: 20, type: 'ENTRADA', reason: 'Compra · entrada a almacén', docRef: 'Factura KAN-1042', userName: 'Administración', balance: 20, createdAt: daysAgo(10) } });
+    await prisma.stockMovement.create({ data: { itemId: acrItem.id, qty: -6, type: 'SALIDA', reason: 'Salida a obra', docRef: 'Remisión OT-2026-088', userName: 'J. Ramírez', balance: 14, otCode: 'OT-2026-088', createdAt: daysAgo(4) } });
+  }
+  if (sbsItem) {
+    await prisma.stockMovement.create({ data: { itemId: sbsItem.id, qty: 40, type: 'ENTRADA', reason: 'Compra · entrada a almacén', docRef: 'Factura CHV-8821', userName: 'Administración', balance: 40, createdAt: daysAgo(12) } });
+    await prisma.stockMovement.create({ data: { itemId: sbsItem.id, qty: -22, type: 'SALIDA', reason: 'Salida a obra', docRef: 'Remisión OT-2026-089', userName: 'M. Torres', balance: 62, otCode: 'OT-2026-089', createdAt: daysAgo(5) } });
+  }
+
+  // ---------- Radar de techos (cuentas de ejemplo) ----------
+  await prisma.radarEntry.createMany({
+    data: [
+      { name: 'Nave logística · Parque Industrial Lagunero', sector: 'Industrial', areaM2: 6800, notes: 'Lámina con óxido · gerente de mantto en LinkedIn', score: 94, analysis: 'Cuenta grande con lámina en mal estado visible y punto de contacto identificado. Prioridad alta.', sequence: '1) Mensaje por LinkedIn con diagnóstico visual · 2) Llamada con estimado de rango · 3) Visita técnica con propuesta' },
+      { name: 'Plaza comercial · Blvd. Independencia', sector: 'Comercial', areaM2: 3200, notes: 'Charcos en imagen de agosto', score: 88, analysis: 'Encharcamientos visibles en fotos públicas: alto riesgo de filtración para el inquilino principal.', sequence: '1) WhatsApp al administrador con la foto del charco · 2) Llamada con estimado · 3) Visita sin costo' },
+      { name: 'Secundaria técnica SEP', sector: 'Gobierno / Salud', areaM2: 2100, notes: 'Licitación probable 2027', score: 76, analysis: 'Posible licitación: conviene entrar temprano al expediente y dejar antecedente técnico.', sequence: '1) Registro en CompraNet · 2) Contacto con conservación · 3) Propuesta de referencia' }
+    ]
+  });
+
+  // ---------- Portafolio (evidencia antes/después) ----------
+  await prisma.portfolioEntry.create({
+    data: { clientName: 'OXXO · Sucursal Torreón Centro', element: 'Losa de azotea no transitable', title: 'Acrílico 10 años · 285 m²', otCode: 'OT-2026-088' }
   });
 
   // ---------- Licitaciones ----------
