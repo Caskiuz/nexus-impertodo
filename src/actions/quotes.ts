@@ -18,6 +18,11 @@ const ExtraSchema = z.object({
   sourceLabel: z.string().optional()
 });
 
+const SectionSchema = z.object({
+  p: z.number().nonnegative(),
+  h: z.number().nonnegative()
+});
+
 const QuoteSchema = z.object({
   id: z.string().optional(),
   clientName: z.string().min(1, 'Cliente requerido'),
@@ -35,6 +40,11 @@ const QuoteSchema = z.object({
   baj: z.number().nonnegative(),
   dom: z.number().nonnegative(),
   duc: z.number().nonnegative(),
+  chaflan: z.number().nonnegative().default(0),
+  extraSections: z.array(SectionSchema).default([]),
+  floors: z.number().int().min(1).max(200).default(1),
+  buildingHeight: z.number().nonnegative().default(0),
+  difficultyNote: z.string().optional().default(''),
   verified: z.boolean().default(false),
   drainageOk: z.boolean().default(true),
   diagnosed: z.boolean().default(false),
@@ -75,6 +85,8 @@ export async function saveQuoteAction(payload: QuotePayload): Promise<{ ok: bool
     baj: data.baj,
     dom: data.dom,
     duc: data.duc,
+    chaflan: data.chaflan,
+    extraSections: data.extraSections,
     optA: data.optA,
     optB: data.optB,
     selected: data.selected,
@@ -131,6 +143,11 @@ export async function saveQuoteAction(payload: QuotePayload): Promise<{ ok: bool
       baj: data.baj,
       dom: data.dom,
       duc: data.duc,
+      chaflan: data.chaflan,
+      extraSections: data.extraSections,
+      floors: data.floors,
+      buildingHeight: data.buildingHeight,
+      difficultyNote: data.difficultyNote || null,
       verified: data.verified,
       drainageOk: data.drainageOk,
       diagnosed: data.diagnosed,

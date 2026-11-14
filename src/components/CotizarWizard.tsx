@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { computeQuote, validations, type SystemDef, type QuoteInput } from '@/lib/calc';
@@ -30,6 +30,44 @@ interface ExtraState {
   sourceLabel?: string;
 }
 
+export interface QuoteEditData {
+  id: string;
+  folio: string;
+  clientName: string;
+  contact: string;
+  phone: string;
+  sector: string;
+  element: string;
+  address: string;
+  billing: 'si' | 'no';
+  access: string;
+  moving: number;
+  planta: number;
+  perim: number;
+  alt: number;
+  baj: number;
+  dom: number;
+  duc: number;
+  chaflan: number;
+  extraSections: { p: number; h: number }[];
+  floors: number;
+  buildingHeight: number;
+  difficultyNote: string;
+  verified: boolean;
+  drainageOk: boolean;
+  diagnosed: boolean;
+  optA: string;
+  optB: string;
+  selected: 'A' | 'B';
+  priceMode: string;
+  marginTarget: number;
+  discount: number;
+  provider: string;
+  extras: ExtraState[];
+}
+
+const DRAFT_KEY = 'impertodo.cotizar.draft';
+
 const DEFAULT_EXTRAS: ExtraState[] = [
   { concept: 'Retiro de acrílico ampollado/despegado y disposición', unitName: 'm²', qty: 197, price: 28, costFactor: 0.68, enabled: false, sourceLabel: 'Diagnóstico: ampollas' },
   { concept: 'Resane de fisuras en pretil con mortero flexible + refuerzo', unitName: 'ml', qty: 38, price: 65, costFactor: 0.68, enabled: false, sourceLabel: 'Diagnóstico: fisura pretil' },
@@ -49,7 +87,8 @@ export default function CotizarWizard({
   indirect,
   documentedKeys,
   prefill,
-  hideMargins
+  hideMargins,
+  quoteData
 }: {
   systems: SystemDef[];
   clients: ClientLite[];
@@ -58,39 +97,52 @@ export default function CotizarWizard({
   documentedKeys: string[];
   prefill: { area?: string; sys?: string; client?: string };
   hideMargins: boolean;
+  quoteData?: QuoteEditData | null;
 }) {
   const router = useRouter();
+  const q = quoteData ?? null;
   const [step, setStep] = useState(1);
-  const [clientName, setClientName] = useState(prefill.client || '');
-  const [contact, setContact] = useState('');
-  const [phone, setPhone] = useState('');
-  const [sector, setSector] = useState('Gobierno / Salud');
-  const [element, setElement] = useState('Losa de azotea no transitable');
-  const [address, setAddress] = useState('');
-  const [billing, setBilling] = useState('si');
-  const [access, setAccess] = useState('1');
-  const [moving, setMoving] = useState('0');
-  const [planta, setPlanta] = useState(prefill.area || '1314.18');
-  const [perim, setPerim] = useState('150');
-  const [alt, setAlt] = useState('0.40');
-  const [baj, setBaj] = useState('4');
-  const [dom, setDom] = useState('1');
-  const [duc, setDuc] = useState('6');
-  const [verified, setVerified] = useState(false);
-  const [drainageOk, setDrainageOk] = useState(true);
-  const [diagnosed, setDiagnosed] = useState(false);
+  const [clientName, setClientName] = useState(q?.clientName || prefill.client || '');
+  const [contact, setContact] = useState(q?.contact || '');
+  const [phone, setPhone] = useState(q?.phone || '');
+  const [sector, setSector] = useState(q?.sector || 'Gobierno / Salud');
+  const [element, setElement] = useState(q?.element || 'Losa de azotea no transitable');
+  const [address, setAddress] = useState(q?.address || '');
+  const [billing, setBilling] = useState<string>(q?.billing || 'si');
+  const [access, setAccess] = useState(q?.access || '1');
+  const [moving, setMoving] = useState(q ? String(q.moving) : '0');
+  const [planta, setPlanta] = useState(q ? String(q.planta) : prefill.area || '1314.18');
+  const [perim, setPerim] = useState(q ? String(q.perim) : '150');
+  const [alt, setAlt] = useState(q ? String(q.alt) : '0.40');
+  const [baj, setBaj] = useState(q ? String(q.baj) : '4');
+  const [dom, setDom] = useState(q ? String(q.dom) : '1');
+  const [duc, setDuc] = useState(q ? String(q.duc) : '6');
+  const [chaflan, setChaflan] = useState(q ? String(q.chaflan) : '0');
+  const [sections, setSections] = useState<{ p: string; h: string }[]>(
+    q ? q.extraSections.map((s) => ({ p: String(s.p), h: String(s.h) })) : []
+  );
+  const [floors, setFloors] = useState(q ? String(q.floors) : '1');
+  const [buildingHeight, setBuildingHeight] = useState(q ? String(q.buildingHeight) : '0');
+  const [difficultyNote, setDifficultyNote] = useState(q?.difficultyNote || '');
+  const [verified, setVerified] = useState(q?.verified ?? false);
+  const [drainageOk, setDrainageOk] = useState(q?.drainageOk ?? true);
+  const [diagnosed, setDiagnosed] = useState(q?.diagnosed ?? false);
   const [diagnosing, setDiagnosing] = useState(false);
-  const [optA, setOptA] = useState('acr10');
-  const [optB, setOptB] = useState(prefill.sys && systems.some((s) => s.key === prefill.sys) ? prefill.sys : 'sbs45');
-  const [selected, setSelected] = useState<'A' | 'B'>('B');
-  const [priceMode, setPriceMode] = useState('promo');
-  const [marginTarget, setMarginTarget] = useState('32');
-  const [discount, setDiscount] = useState('0');
-  const [provider, setProvider] = useState('nac');
-  const [extras, setExtras] = useState<ExtraState[]>(DEFAULT_EXTRAS);
+  const [optA, setOptA] = useState(q?.optA || 'acr10');
+  const [optB, setOptB] = useState(q?.optB || (prefill.sys && systems.some((s) => s.key === prefill.sys) ? prefill.sys : 'sbs45'));
+  const [selected, setSelected] = useState<'A' | 'B'>(q?.selected || 'B');
+  const [priceMode, setPriceMode] = useState(q?.priceMode || 'promo');
+  const [marginTarget, setMarginTarget] = useState(q ? String(q.marginTarget) : '32');
+  const [discount, setDiscount] = useState(q ? String(q.discount) : '0');
+  const [provider, setProvider] = useState(q?.provider || 'nac');
+  const [extras, setExtras] = useState<ExtraState[]>(
+    q?.extras || DEFAULT_EXTRAS
+  );
   const [showApu, setShowApu] = useState(false);
   const [saved, setSaved] = useState<{ id: string; folio: string; sent: boolean } | null>(null);
   const [msg, setMsg] = useState('');
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftCleared, setDraftCleared] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const input: QuoteInput = {
@@ -100,6 +152,8 @@ export default function CotizarWizard({
     baj: n(baj),
     dom: n(dom),
     duc: n(duc),
+    chaflan: n(chaflan),
+    extraSections: sections.map((s) => ({ p: n(s.p), h: n(s.h) })),
     optA,
     optB,
     selected,
@@ -137,6 +191,127 @@ export default function CotizarWizard({
     window.setTimeout(() => setMsg(''), 3200);
   }
 
+  function addSection() {
+    setSections((prev) => [...prev, { p: '', h: '' }]);
+  }
+
+  function removeSection(i: number) {
+    setSections((prev) => prev.filter((_, j) => j !== i));
+  }
+
+  function updateSection(i: number, field: 'p' | 'h', value: string) {
+    setSections((prev) => prev.map((s, j) => (j === i ? { ...s, [field]: value } : s)));
+  }
+
+  // ---------- Borrador local (autosave) ----------
+  const draftJson = useMemo(
+    () =>
+      JSON.stringify({
+        step,
+        clientName,
+        contact,
+        phone,
+        sector,
+        element,
+        address,
+        billing,
+        access,
+        moving,
+        planta,
+        perim,
+        alt,
+        baj,
+        dom,
+        duc,
+        chaflan,
+        sections,
+        floors,
+        buildingHeight,
+        difficultyNote,
+        verified,
+        drainageOk,
+        optA,
+        optB,
+        selected,
+        priceMode,
+        marginTarget,
+        discount,
+        provider,
+        extras
+      }),
+    [step, clientName, contact, phone, sector, element, address, billing, access, moving, planta, perim, alt, baj, dom, duc, chaflan, sections, floors, buildingHeight, difficultyNote, verified, drainageOk, optA, optB, selected, priceMode, marginTarget, discount, provider, extras]
+  );
+
+  useEffect(() => {
+    if (q) return; // editando una cotización guardada: sus datos son la fuente de verdad
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        if (d && typeof d === 'object') {
+          const set = <T,>(setter: (v: T) => void, v: unknown, fallback: T) => setter((v ?? fallback) as T);
+          set(setStep, d.step, 1);
+          set(setClientName, d.clientName, '');
+          set(setContact, d.contact, '');
+          set(setPhone, d.phone, '');
+          set(setSector, d.sector, 'Gobierno / Salud');
+          set(setElement, d.element, 'Losa de azotea no transitable');
+          set(setAddress, d.address, '');
+          set(setBilling, d.billing, 'si');
+          set(setAccess, d.access, '1');
+          set(setMoving, d.moving, '0');
+          set(setPlanta, d.planta, '1314.18');
+          set(setPerim, d.perim, '150');
+          set(setAlt, d.alt, '0.40');
+          set(setBaj, d.baj, '4');
+          set(setDom, d.dom, '1');
+          set(setDuc, d.duc, '6');
+          set(setChaflan, d.chaflan, '0');
+          if (Array.isArray(d.sections)) setSections(d.sections as { p: string; h: string }[]);
+          set(setFloors, d.floors, '1');
+          set(setBuildingHeight, d.buildingHeight, '0');
+          set(setDifficultyNote, d.difficultyNote, '');
+          set(setVerified, d.verified, false);
+          set(setDrainageOk, d.drainageOk, true);
+          set(setOptA, d.optA, 'acr10');
+          set(setOptB, d.optB, 'sbs45');
+          set(setSelected, d.selected, 'B');
+          set(setPriceMode, d.priceMode, 'promo');
+          set(setMarginTarget, d.marginTarget, '32');
+          set(setDiscount, d.discount, '0');
+          set(setProvider, d.provider, 'nac');
+          if (Array.isArray(d.extras)) setExtras(d.extras as ExtraState[]);
+          setDraftRestored(true);
+        }
+      }
+    } catch {
+      /* borrador corrupto: se ignora */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (q || draftCleared) return;
+    const t = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(DRAFT_KEY, draftJson);
+      } catch {
+        /* sin espacio o modo privado: se ignora */
+      }
+    }, 500);
+    return () => window.clearTimeout(t);
+  }, [draftJson, q, draftCleared]);
+
+  function discardDraft() {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+    setDraftCleared(true);
+    setDraftRestored(false);
+  }
+
   function pickClient(id: string) {
     const cl = clients.find((x) => x.id === id);
     if (!cl) return;
@@ -161,6 +336,7 @@ export default function CotizarWizard({
   function save(send: boolean) {
     startTransition(async () => {
       const res = await saveQuoteAction({
+        id: q?.id,
         clientName: clientName || 'Cliente sin nombre',
         contact,
         phone,
@@ -176,6 +352,11 @@ export default function CotizarWizard({
         baj: n(baj),
         dom: n(dom),
         duc: n(duc),
+        chaflan: n(chaflan),
+        extraSections: sections.map((s) => ({ p: n(s.p), h: n(s.h) })),
+        floors: Math.max(1, Math.round(n(floors) || 1)),
+        buildingHeight: n(buildingHeight),
+        difficultyNote,
         verified,
         drainageOk,
         diagnosed,
@@ -191,6 +372,7 @@ export default function CotizarWizard({
       });
       if (res.ok && res.id && res.folio) {
         setSaved({ id: res.id, folio: res.folio, sent: send });
+        if (!q && !draftCleared) discardDraft();
         flash(send ? `Cotización ${res.folio} enviada (demo) · seguimiento programado` : `Borrador ${res.folio} guardado`);
         router.refresh();
       } else {
@@ -203,6 +385,22 @@ export default function CotizarWizard({
 
   return (
     <>
+      {q && (
+        <div className="alert b" style={{ marginBottom: 12 }}>
+          Editando la cotización <b>{q.folio}</b>. Al guardar se actualiza la misma cotización (mismo folio), no se crea una nueva.{' '}
+          <Link href="/cotizar">Cancelar y empezar una nueva</Link>
+        </div>
+      )}
+      {!q && draftRestored && (
+        <div className="alert g" style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span>
+            <b>Borrador recuperado</b> · tus datos quedaron guardados automáticamente en este dispositivo y no se perdieron.
+          </span>
+          <button className="btn sm" type="button" onClick={discardDraft}>
+            Empezar en blanco
+          </button>
+        </div>
+      )}
       <div className="steps">
         {steps.map((s, i) => (
           <button
@@ -294,7 +492,10 @@ export default function CotizarWizard({
 
           <div className={`panel-step ${step === 2 ? 'on' : ''}`}>
             <h2>Medición y área desarrollada</h2>
-            <div className="hint">El área desarrollada suma pretiles, chaflanes, bajantes, domos y ductos: hasta 15% que se dejan de cobrar.</div>
+            <div className="hint">
+              El área desarrollada suma planta, pretiles (con secciones extra), chaflanes, bajantes, domos y ductos. Los chaflanes ya no se
+              calculan solos: escríbelos tú con tu medición real.
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
               <SmartImage
                 className="img-thumb"
@@ -303,10 +504,21 @@ export default function CotizarWizard({
                 fallback={elementSvg(element)}
                 alt={element}
               />
-              <div>
-                <b>{element}</b>
-                <div className="mini">Servicio seleccionado · el diagnóstico ajusta las partidas previas.</div>
-                <PhotoCredit kind="element" id={element} />
+              <div style={{ flex: 1 }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label>Tipo de área (clasificación)</label>
+                  <select value={element} onChange={(e) => setElement(e.target.value)}>
+                    <option>Losa de azotea no transitable</option>
+                    <option>Losa transitable</option>
+                    <option>Nave / lámina</option>
+                    <option>Cisterna</option>
+                    <option>Muro / cimentación</option>
+                    <option>Piso industrial</option>
+                  </select>
+                </div>
+                <div className="mini" style={{ marginTop: 4 }}>
+                  <PhotoCredit kind="element" id={element} />
+                </div>
               </div>
             </div>
             <div className="row3">
@@ -323,6 +535,10 @@ export default function CotizarWizard({
                 <input type="number" step="0.05" value={alt} onChange={(e) => setAlt(e.target.value)} />
               </div>
               <div className="field">
+                <label>Chaflanes (m²) — escríbelo tú</label>
+                <input type="number" step="0.1" value={chaflan} onChange={(e) => setChaflan(e.target.value)} placeholder="0" />
+              </div>
+              <div className="field">
                 <label>Bajantes</label>
                 <input type="number" value={baj} onChange={(e) => setBaj(e.target.value)} />
               </div>
@@ -333,6 +549,22 @@ export default function CotizarWizard({
               <div className="field">
                 <label>Perímetro ductos (m)</label>
                 <input type="number" value={duc} onChange={(e) => setDuc(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Número de pisos del área</label>
+                <input type="number" min="1" value={floors} onChange={(e) => setFloors(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Altura de edificio / trabajo (m)</label>
+                <input type="number" step="0.5" value={buildingHeight} onChange={(e) => setBuildingHeight(e.target.value)} />
+              </div>
+              <div className="field" style={{ gridColumn: '1 / -1' }}>
+                <label>Dificultad / notas de acceso</label>
+                <input
+                  value={difficultyNote}
+                  onChange={(e) => setDifficultyNote(e.target.value)}
+                  placeholder="Ej. sin elevador, azotea frágil, maniobras con viento, techo a 12 m"
+                />
               </div>
               <div className="field">
                 <label>¿Área verificada en sitio?</label>
@@ -349,7 +581,42 @@ export default function CotizarWizard({
                 </select>
               </div>
             </div>
-            <div className="area-box">
+
+            <div className="sec" style={{ margin: '12px 0 6px' }}>
+              Secciones extra de perímetro y altura
+            </div>
+            {sections.map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'center' }}>
+                <input
+                  type="number"
+                  placeholder={`Perímetro sección ${i + 1} (m)`}
+                  value={s.p}
+                  onChange={(e) => updateSection(i, 'p', e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="number"
+                  step="0.05"
+                  placeholder={`Altura sección ${i + 1} (m)`}
+                  value={s.h}
+                  onChange={(e) => updateSection(i, 'h', e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button className="btn sm" type="button" onClick={() => removeSection(i)} title="Quitar sección">
+                  ✕
+                </button>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="btn sm" type="button" onClick={addSection}>
+                + Agregar sección perímetro/altura
+              </button>
+              <span className="mini">
+                Cada sección suma perímetro × altura al pretil. Útil cuando el edificio tiene tramos con alturas distintas.
+              </span>
+            </div>
+
+            <div className="area-box" style={{ marginTop: 11 }}>
               <div className="big">{c.area.dev.toFixed(1)} m²</div>
               <span>
                 planta {c.area.planta.toFixed(1)} + pretiles {c.area.pretil.toFixed(1)} + chaflanes {c.area.chaflan.toFixed(1)} + bajantes/domos{' '}

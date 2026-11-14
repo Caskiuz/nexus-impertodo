@@ -35,6 +35,8 @@ export interface QuoteInput {
   baj: number;
   dom: number;
   duc: number;
+  chaflan: number; // m² escritos a mano por el usuario (sin cálculo automático)
+  extraSections: { p: number; h: number }[]; // secciones extra de perímetro/altura
   optA: string;
   optB: string;
   selected: 'A' | 'B';
@@ -60,15 +62,23 @@ export interface Areas {
   dev: number;
 }
 
-export function areas(i: Pick<QuoteInput, 'planta' | 'perim' | 'alt' | 'baj' | 'dom' | 'duc'>): Areas {
+export function areas(
+  i: Pick<QuoteInput, 'planta' | 'perim' | 'alt' | 'baj' | 'dom' | 'duc' | 'chaflan' | 'extraSections'>
+): Areas {
   const planta = Math.max(0, i.planta || 0);
   const per = Math.max(0, i.perim || 0);
   const alt = Math.max(0, i.alt || 0);
   const baj = Math.max(0, i.baj || 0);
   const dom = Math.max(0, i.dom || 0);
   const duc = Math.max(0, i.duc || 0);
-  const pretil = per * alt;
-  const chaflan = per * 0.15;
+  // Chaflán manual: lo escribe el usuario; el sistema ya no lo calcula automáticamente.
+  const chaflan = Math.max(0, i.chaflan || 0);
+  // Secciones extra de perímetro/altura: cada una suma perímetro × altura al pretil.
+  const extraPretil = (i.extraSections || []).reduce(
+    (s, e) => s + Math.max(0, e?.p || 0) * Math.max(0, e?.h || 0),
+    0
+  );
+  const pretil = per * alt + extraPretil;
   const bajantes = baj * 0.5;
   const domos = dom * 1.2;
   const ductos = duc * 0.4;
@@ -184,7 +194,7 @@ export interface Check {
 
 export function validations(sys: SystemDef, input: QuoteInput, c: QuoteComputation, opts: { verified: boolean; drainageOk: boolean; diagnosed: boolean; documented: boolean }): Check[] {
   return [
-    { kind: 'ok', text: 'Área desarrollada incluye pretiles, chaflanes, bajantes, domos y ductos.' },
+    { kind: 'ok', text: 'Área desarrollada incluye pretiles y secciones, chaflanes, bajantes, domos y ductos (chaflanes según lo capturado).' },
     {
       kind: opts.verified ? 'ok' : 'warn',
       text: opts.verified ? 'Área verificada en sitio.' : 'Área no verificada: la propuesta lleva "a reserva de verificar área". Programar visita.'

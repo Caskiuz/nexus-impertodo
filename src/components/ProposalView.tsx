@@ -27,6 +27,8 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
     baj: quote.baj,
     dom: quote.dom,
     duc: quote.duc,
+    chaflan: quote.chaflan,
+    extraSections: Array.isArray(quote.extraSections) ? (quote.extraSections as { p: number; h: number }[]) : [],
     optA: quote.optA,
     optB: quote.optB,
     selected: quote.selected === 'A' ? 'A' : 'B',
@@ -200,6 +202,13 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
                   <span>Área desarrollada</span>
                   <b>{chosen.area.dev.toFixed(1)} m²</b>
                 </div>
+                {(quote.floors > 1 || quote.buildingHeight > 0 || quote.difficultyNote) && (
+                  <div className="mini" style={{ marginBottom: 6 }}>
+                    {quote.floors > 1 && <>Pisos: {quote.floors} · </>}
+                    {quote.buildingHeight > 0 && <>Altura: {quote.buildingHeight} m · </>}
+                    {quote.difficultyNote && <>Dificultad: {quote.difficultyNote}</>}
+                  </div>
+                )}
                 <div className="sumline">
                   <span>Precio / m²</span>
                   <b>{fmt(chosen.unitPrice)}</b>
