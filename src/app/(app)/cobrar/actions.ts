@@ -34,3 +34,17 @@ export async function payInvoiceAction(formData: FormData) {
   revalidatePath('/hoy');
   redirect('/cobrar?msg=pagada');
 }
+
+export async function addCollectionNoteAction(formData: FormData) {
+  const user = await requireUser();
+  const clientName = String(formData.get('clientName') || '').trim();
+  const note = String(formData.get('note') || '').trim();
+  if (!clientName || !note) redirect(`/cobrar?client=${encodeURIComponent(clientName)}&err=nota`);
+
+  await prisma.collectionNote.create({
+    data: { clientName, note, userName: user.name || null }
+  });
+  await logAudit(user, 'Nota de gestión de cobro', `${clientName} · ${note.slice(0, 80)}`);
+  revalidatePath('/cobrar');
+  redirect(`/cobrar?client=${encodeURIComponent(clientName)}&msg=nota`);
+}
