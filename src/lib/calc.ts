@@ -62,27 +62,39 @@ export interface Areas {
   dev: number;
 }
 
+const r2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 100;
+
 export function areas(
   i: Pick<QuoteInput, 'planta' | 'perim' | 'alt' | 'baj' | 'dom' | 'duc' | 'chaflan' | 'extraSections'>
 ): Areas {
-  const planta = Math.max(0, i.planta || 0);
+  const planta = r2(Math.max(0, i.planta || 0));
   const per = Math.max(0, i.perim || 0);
   const alt = Math.max(0, i.alt || 0);
   const baj = Math.max(0, i.baj || 0);
   const dom = Math.max(0, i.dom || 0);
   const duc = Math.max(0, i.duc || 0);
   // Chaflán manual: lo escribe el usuario; el sistema ya no lo calcula automáticamente.
-  const chaflan = Math.max(0, i.chaflan || 0);
+  const chaflan = r2(Math.max(0, i.chaflan || 0));
   // Secciones extra de perímetro/altura: cada una suma perímetro × altura al pretil.
   const extraPretil = (i.extraSections || []).reduce(
     (s, e) => s + Math.max(0, e?.p || 0) * Math.max(0, e?.h || 0),
     0
   );
-  const pretil = per * alt + extraPretil;
-  const bajantes = baj * 0.5;
-  const domos = dom * 1.2;
-  const ductos = duc * 0.4;
-  return { planta, pretil, chaflan, bajantes, domos, ductos, dev: planta + pretil + chaflan + bajantes + domos + ductos };
+  const pretil = r2(per * alt + extraPretil);
+  const bajantes = r2(baj * 0.5);
+  const domos = r2(dom * 1.2);
+  const ductos = r2(duc * 0.4);
+  // Todo se redondea a 2 decimales para que el área mostrada sea exactamente la que se cobra:
+  // m² mostrados × precio mostrado = importe, sin diferencias por decimales ocultos.
+  return {
+    planta,
+    pretil,
+    chaflan,
+    bajantes,
+    domos,
+    ductos,
+    dev: r2(planta + pretil + chaflan + bajantes + domos + ductos)
+  };
 }
 
 export function providerFactor(provider: string): number {
@@ -121,7 +133,8 @@ export function unitPrice(sys: SystemDef, input: QuoteInput): number {
     unit = cb.total / (1 - Math.max(1, Math.min(90, input.marginTarget)) / 100);
   }
   const disc = Math.max(0, Math.min(95, input.discount || 0)) / 100;
-  return unit * (1 - disc);
+  // Precio a 2 decimales: el /m² mostrado es exactamente el que multiplica el área.
+  return r2(unit * (1 - disc));
 }
 
 export function semaforoClass(margin: number, floor: number): 'ok' | 'warn' | 'bad' {
@@ -153,12 +166,12 @@ export interface QuoteComputation {
 export function computeQuote(sys: SystemDef, input: QuoteInput): QuoteComputation {
   const area = areas(input);
   const p = unitPrice(sys, input);
-  const main = area.dev * p;
+  const main = r2(area.dev * p);
   const enabled = input.extras.filter((e) => e.enabled);
-  const extrasSum = enabled.reduce((x, e) => x + e.qty * e.price, 0);
-  const extrasCost = enabled.reduce((x, e) => x + e.qty * e.price * e.costFactor, 0);
-  const sub = main + extrasSum;
-  const iva = input.billing ? sub * 0.16 : 0;
+  const extrasSum = r2(enabled.reduce((x, e) => x + e.qty * e.price, 0));
+  const extrasCost = r2(enabled.reduce((x, e) => x + e.qty * e.price * e.costFactor, 0));
+  const sub = r2(main + extrasSum);
+  const iva = r2(input.billing ? sub * 0.16 : 0);
   const cb = costBreak(sys, area.dev, {
     provider: input.provider,
     indirect: input.indirect,

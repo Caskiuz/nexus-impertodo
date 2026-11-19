@@ -99,7 +99,7 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span className="mini">Vida útil {sys.life} años</span>
-                  <b>{fmt(comp.total)}</b>
+                  <b>{fmt2(comp.total)}</b>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span className="mini">Costo por m² por año</span>
@@ -200,7 +200,7 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
                 <div className="sec">Resumen financiero</div>
                 <div className="sumline">
                   <span>Área desarrollada</span>
-                  <b>{chosen.area.dev.toFixed(1)} m²</b>
+                  <b>{chosen.area.dev.toFixed(2)} m²</b>
                 </div>
                 {(quote.floors > 1 || quote.buildingHeight > 0 || quote.difficultyNote) && (
                   <div className="mini" style={{ marginBottom: 6 }}>
@@ -211,23 +211,23 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
                 )}
                 <div className="sumline">
                   <span>Precio / m²</span>
-                  <b>{fmt(chosen.unitPrice)}</b>
+                  <b>{fmt2(chosen.unitPrice)}</b>
                 </div>
                 <div className="sumline">
                   <span>Partidas previas</span>
-                  <b>{fmt(chosen.extrasSum)}</b>
+                  <b>{fmt2(chosen.extrasSum)}</b>
                 </div>
                 <div className="sumline">
                   <span>Subtotal</span>
-                  <b>{fmt(chosen.sub)}</b>
+                  <b>{fmt2(chosen.sub)}</b>
                 </div>
                 <div className="sumline">
                   <span>IVA</span>
-                  <b>{fmt(chosen.iva)}</b>
+                  <b>{fmt2(chosen.iva)}</b>
                 </div>
                 <div className="sumline total">
                   <span>Total</span>
-                  <b>{fmt(chosen.total)}</b>
+                  <b>{fmt2(chosen.total)}</b>
                 </div>
                 <div className="sumline">
                   <span>Margen</span>

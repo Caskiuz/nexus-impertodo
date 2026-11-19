@@ -736,10 +736,10 @@ export default function CotizarWizard({
             </div>
 
             <div className="area-box" style={{ marginTop: 11 }}>
-              <div className="big">{c.area.dev.toFixed(1)} m²</div>
+              <div className="big">{c.area.dev.toFixed(2)} m²</div>
               <span>
-                planta {c.area.planta.toFixed(1)} + pretiles {c.area.pretil.toFixed(1)} + chaflanes {c.area.chaflan.toFixed(1)} + bajantes/domos{' '}
-                {(c.area.bajantes + c.area.domos).toFixed(1)} + ductos {c.area.ductos.toFixed(1)}
+                planta {c.area.planta.toFixed(2)} + pretiles {c.area.pretil.toFixed(2)} + chaflanes {c.area.chaflan.toFixed(2)} + bajantes/domos{' '}
+                {(c.area.bajantes + c.area.domos).toFixed(2)} + ductos {c.area.ductos.toFixed(2)}
               </span>
             </div>
             <div className="alert b" style={{ marginTop: 11 }}>
@@ -858,11 +858,11 @@ export default function CotizarWizard({
                     </select>
                   </div>
                   <div className="price">
-                    <s style={{ color: 'var(--gris)', fontSize: 15 }}>{fmt(sysDef.list)}</s> {fmt(comp.unitPrice)} <small>/m² {comp.iva > 0 ? '+ IVA' : 'neto'}</small>
+                    <s style={{ color: 'var(--gris)', fontSize: 15 }}>{fmt(sysDef.list)}</s> {fmt2(comp.unitPrice)} <small>/m² {comp.iva > 0 ? '+ IVA' : 'neto'}</small>
                   </div>
                   <dl>
                     <dt>Total {comp.area.dev.toFixed(0)} m² + partidas</dt>
-                    <dd>{fmt(comp.total)}</dd>
+                    <dd>{fmt2(comp.total)}</dd>
                     <dt>Vida útil · garantía</dt>
                     <dd>
                       {sysDef.life} a · {sysDef.warranty} a
@@ -937,7 +937,7 @@ export default function CotizarWizard({
                             onChange={(ev) => setExtras((prev) => prev.map((x, j) => (j === i ? { ...x, price: n(ev.target.value) } : x)))}
                           />
                         </td>
-                        <td className="num">{fmt(e.qty * e.price)}</td>
+                        <td className="num">{fmt2(e.qty * e.price)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1098,27 +1098,27 @@ export default function CotizarWizard({
             </div>
             <div className="sumline">
               <span>Área facturable</span>
-              <b>{c.area.dev.toFixed(1)} m²</b>
+              <b>{c.area.dev.toFixed(2)} m²</b>
             </div>
             <div className="sumline">
               <span>Precio final /m²</span>
-              <b>{fmt(c.unitPrice)}</b>
+              <b>{fmt2(c.unitPrice)}</b>
             </div>
             <div className="sumline">
               <span>Partidas previas</span>
-              <b>{fmt(c.extrasSum)}</b>
+              <b>{fmt2(c.extrasSum)}</b>
             </div>
             <div className="sumline">
               <span>Subtotal</span>
-              <b>{fmt(c.sub)}</b>
+              <b>{fmt2(c.sub)}</b>
             </div>
             <div className="sumline">
               <span>IVA 16%</span>
-              <b>{fmt(c.iva)}</b>
+              <b>{fmt2(c.iva)}</b>
             </div>
             <div className="sumline total">
               <span>TOTAL</span>
-              <b>{fmt(c.total)}</b>
+              <b>{fmt2(c.total)}</b>
             </div>
             {!hideMargins && (
               <div style={{ marginTop: 9 }}>
@@ -1154,27 +1154,27 @@ export default function CotizarWizard({
             <div className="sec">Costo interno</div>
             <div className="sumline">
               <span>Material ({c.packs} {c.packUnit})</span>
-              <b>{fmt(c.cb.mat)}</b>
+              <b>{fmt2(c.cb.mat)}</b>
             </div>
             <div className="sumline">
               <span>Destajo × acceso</span>
-              <b>{fmt(c.cb.labor)}</b>
+              <b>{fmt2(c.cb.labor)}</b>
             </div>
             <div className="sumline">
               <span>Consumibles + movilización</span>
-              <b>{fmt(c.cb.cons + c.cb.mov)}</b>
+              <b>{fmt2(c.cb.cons + c.cb.mov)}</b>
             </div>
             <div className="sumline">
               <span>Indirectos</span>
-              <b>{fmt(c.cb.ind)}</b>
+              <b>{fmt2(c.cb.ind)}</b>
             </div>
             <div className="sumline">
               <span>Costo partidas previas</span>
-              <b>{fmt(c.extrasCost)}</b>
+              <b>{fmt2(c.extrasCost)}</b>
             </div>
             <div className="sumline total">
               <span>Utilidad bruta</span>
-              <b>{fmt(c.sub - c.cost)}</b>
+              <b>{fmt2(c.sub - c.cost)}</b>
             </div>
           </div>
         </div>
