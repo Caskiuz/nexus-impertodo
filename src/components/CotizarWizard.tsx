@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { computeQuote, validations, type SystemDef, type QuoteInput } from '@/lib/calc';
@@ -8,6 +8,7 @@ import { fmt, fmt2 } from '@/lib/constants';
 import { systemImage, elementImage, systemSvg, elementSvg } from '@/lib/images';
 import SmartImage from '@/components/SmartImage';
 import PhotoCredit from '@/components/PhotoCredit';
+import { compressImageFile } from '@/lib/compress-image';
 import { saveQuoteAction } from '@/actions/quotes';
 
 interface ClientLite {
@@ -64,9 +65,17 @@ export interface QuoteEditData {
   discount: number;
   provider: string;
   extras: ExtraState[];
+  photos: { id: string; dataUrl: string }[];
 }
 
 const DRAFT_KEY = 'impertodo.cotizar.draft';
+const MAX_PHOTOS = 8;
+
+interface DiagnosisFinding {
+  severity: string;
+  title: string;
+  detail: string;
+}
 
 const DEFAULT_EXTRAS: ExtraState[] = [
   { concept: 'Retiro de acrílico ampollado/despegado y disposición', unitName: 'm²', qty: 197, price: 28, costFactor: 0.68, enabled: false, sourceLabel: 'Diagnóstico: ampollas' },
@@ -138,12 +147,19 @@ export default function CotizarWizard({
   const [extras, setExtras] = useState<ExtraState[]>(
     q?.extras || DEFAULT_EXTRAS
   );
+  const [photos, setPhotos] = useState<{ id?: string; dataUrl: string }[]>(q?.photos || []);
+  const [findings, setFindings] = useState<DiagnosisFinding[]>([]);
+  const [recommendation, setRecommendation] = useState('');
+  const [analysisMode, setAnalysisMode] = useState<'gemini' | 'fallback' | null>(null);
   const [showApu, setShowApu] = useState(false);
   const [saved, setSaved] = useState<{ id: string; folio: string; sent: boolean } | null>(null);
   const [msg, setMsg] = useState('');
   const [draftRestored, setDraftRestored] = useState(false);
   const [draftCleared, setDraftCleared] = useState(false);
   const [pending, startTransition] = useTransition();
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const input: QuoteInput = {
     planta: n(planta),
@@ -237,18 +253,20 @@ export default function CotizarWizard({
         marginTarget,
         discount,
         provider,
-        extras
+        extras,
+        photoIds: photos.map((p) => p.id).filter((x): x is string => Boolean(x))
       }),
-    [step, clientName, contact, phone, sector, element, address, billing, access, moving, planta, perim, alt, baj, dom, duc, chaflan, sections, floors, buildingHeight, difficultyNote, verified, drainageOk, optA, optB, selected, priceMode, marginTarget, discount, provider, extras]
+    [step, clientName, contact, phone, sector, element, address, billing, access, moving, planta, perim, alt, baj, dom, duc, chaflan, sections, floors, buildingHeight, difficultyNote, verified, drainageOk, optA, optB, selected, priceMode, marginTarget, discount, provider, extras, photos]
   );
 
   useEffect(() => {
     if (q) return; // editando una cotización guardada: sus datos son la fuente de verdad
-    try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        const d = JSON.parse(raw) as Record<string, unknown>;
-        if (d && typeof d === 'object') {
+    (async () => {
+      try {
+        const raw = window.localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          const d = JSON.parse(raw) as Record<string, unknown>;
+          if (d && typeof d === 'object') {
           const set = <T,>(setter: (v: T) => void, v: unknown, fallback: T) => setter((v ?? fallback) as T);
           set(setStep, d.step, 1);
           set(setClientName, d.clientName, '');
@@ -282,11 +300,25 @@ export default function CotizarWizard({
           set(setProvider, d.provider, 'nac');
           if (Array.isArray(d.extras)) setExtras(d.extras as ExtraState[]);
           setDraftRestored(true);
+          // Las fotos se suben al servidor al adjuntarse: el borrador guarda sus ids y aquí se recuperan.
+          const photoIds = Array.isArray(d.photoIds) ? (d.photoIds as string[]).filter(Boolean) : [];
+          if (photoIds.length) {
+            try {
+              const r = await fetch(`/api/quote-photos?ids=${encodeURIComponent(photoIds.join(','))}`);
+              const data = await r.json();
+              if (r.ok && data.ok && Array.isArray(data.photos)) {
+                setPhotos(data.photos as { id: string; dataUrl: string }[]);
+              }
+            } catch {
+              /* sin conexión a las fotos: se continúa sin ellas */
+            }
+          }
         }
       }
-    } catch {
-      /* borrador corrupto: se ignora */
-    }
+        } catch {
+          /* borrador corrupto: se ignora */
+        }
+      })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -323,14 +355,100 @@ export default function CotizarWizard({
     if (cl.area) setPlanta(String(cl.area));
   }
 
-  function analyze() {
+  // ---------- Fotos del área (diagnóstico) ----------
+  async function attachFiles(fileList: FileList | null) {
+    if (!fileList?.length) return;
+    const room = MAX_PHOTOS - photos.length;
+    if (room <= 0) {
+      flash(`Máximo ${MAX_PHOTOS} fotos por cotización.`);
+      return;
+    }
+    setUploadingPhoto(true);
+    const files = Array.from(fileList).slice(0, room);
+    for (const file of files) {
+      try {
+        const dataUrl = await compressImageFile(file);
+        const res = await fetch('/api/quote-photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'No pudo subirse la foto.');
+        setPhotos((prev) => [...prev, { id: data.id, dataUrl }]);
+      } catch (e) {
+        flash((e as Error).message || 'No pude subir la foto.');
+      }
+    }
+    setUploadingPhoto(false);
+  }
+
+  async function removePhoto(i: number) {
+    const photo = photos[i];
+    if (!photo) return;
+    if (photo.id) {
+      try {
+        await fetch(`/api/quote-photos?id=${photo.id}`, { method: 'DELETE' });
+      } catch {
+        /* si falla el borrado en servidor, igual la quitamos de la vista */
+      }
+    }
+    setPhotos((prev) => prev.filter((_, j) => j !== i));
+  }
+
+  // Activa las partidas previas relacionadas con los daños que la IA detectó en las fotos.
+  function partidaMatches(text: string, concept: string): boolean {
+    const c = concept.toLowerCase();
+    return (
+      (/(encharc|pendiente|charco)/.test(text) && /(pendiente|encharc)/.test(c)) ||
+      (/(ampoll|despeg)/.test(text) && /(ampoll|retiro)/.test(c)) ||
+      (/(fisur|grieta|pretil)/.test(text) && /(fisur|resane)/.test(c)) ||
+      (/(bajante|domo)/.test(text) && /(bajante|refuerzo)/.test(c))
+    );
+  }
+
+  function enableExtrasForFindings(list: DiagnosisFinding[]) {
+    const text = list.map((f) => `${f.title} ${f.detail}`).join(' ').toLowerCase();
+    const matched = extras.filter((e) => partidaMatches(text, e.concept)).length;
+    setExtras((prev) => prev.map((e) => (partidaMatches(text, e.concept) ? { ...e, enabled: true } : e)));
+    return matched;
+  }
+
+  async function analyze() {
+    if (diagnosing) return;
+    if (!photos.length) {
+      flash('Primero adjunta al menos una foto del área.');
+      return;
+    }
     setDiagnosing(true);
-    window.setTimeout(() => {
+    try {
+      const res = await fetch('/api/quote-diagnosis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoIds: photos.map((p) => p.id).filter((x): x is string => Boolean(x)), element, planta: n(planta) })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo analizar.');
+      setAnalysisMode(data.mode);
+      const list: DiagnosisFinding[] = data.findings || [];
+      setFindings(list);
+      setRecommendation(data.recommendation || '');
+      if (data.mode === 'gemini') {
+        const matched = enableExtrasForFindings(list);
+        setDiagnosed(true);
+        flash(
+          list.length
+            ? `Diagnóstico listo: ${list.length} daño(s) detectado(s) · ${matched} partida(s) propuesta(s)`
+            : 'Diagnóstico listo: la IA no ve daños evidentes en las fotos'
+        );
+      } else {
+        flash('La IA no está disponible ahora: puedes continuar sin diagnóstico.');
+      }
+    } catch (e) {
+      flash((e as Error).message || 'No se pudo analizar las fotos.');
+    } finally {
       setDiagnosing(false);
-      setDiagnosed(true);
-      setExtras((prev) => prev.map((e) => ({ ...e, enabled: true })));
-      flash('Diagnóstico listo: 4 partidas previas activadas');
-    }, 900);
+    }
   }
 
   function save(send: boolean) {
@@ -368,6 +486,7 @@ export default function CotizarWizard({
         discount: n(discount),
         provider,
         extras,
+        photoIds: photos.map((p) => p.id).filter((x): x is string => Boolean(x)),
         send
       });
       if (res.ok && res.id && res.folio) {
@@ -630,27 +749,76 @@ export default function CotizarWizard({
 
           <div className={`panel-step ${step === 3 ? 'on' : ''}`}>
             <h2>Diagnóstico de daños por IA</h2>
-            <div className="hint">El diagnóstico define partidas previas y sistema recomendado. Nunca bloquea: puedes seguir sin él.</div>
-            <button className="btn azul" onClick={analyze} disabled={diagnosing}>
-              {diagnosing ? 'Analizando…' : '🔬 Analizar fotos con IA'}
+            <div className="hint">
+              Adjunta fotos del área (desde la PC o la cámara del celular) y pulsa Analizar: la IA revisa el daño y propone las partidas
+              previas. Nunca bloquea: puedes seguir sin diagnóstico.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
+              <button className="btn" type="button" onClick={() => galleryRef.current?.click()} disabled={uploadingPhoto || photos.length >= MAX_PHOTOS}>
+                📁 Adjuntar fotos del área
+              </button>
+              <button className="btn" type="button" onClick={() => cameraRef.current?.click()} disabled={uploadingPhoto || photos.length >= MAX_PHOTOS}>
+                📸 Tomar foto (celular)
+              </button>
+              <span className="mini">
+                {photos.length}/{MAX_PHOTOS} fotos · se comprimen solas al subirse
+              </span>
+            </div>
+            <input ref={galleryRef} type="file" accept="image/*" multiple hidden onChange={(e) => attachFiles(e.target.files)} />
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => attachFiles(e.target.files)} />
+            {photos.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                {photos.map((p, i) => (
+                  <div key={p.id || `nueva-${i}`} style={{ position: 'relative' }}>
+                    <img
+                      src={p.dataUrl}
+                      alt={`Foto del área ${i + 1}`}
+                      style={{ width: 120, height: 84, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--linea)', display: 'block' }}
+                    />
+                    <button
+                      className="btn sm"
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      title="Quitar foto"
+                      style={{ position: 'absolute', top: -8, right: -8, padding: '2px 7px', borderRadius: 99 }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {uploadingPhoto && <div className="alert b">Subiendo y comprimiendo fotos…</div>}
+            <button className="btn azul" onClick={analyze} disabled={diagnosing || uploadingPhoto}>
+              {diagnosing ? 'Analizando fotos…' : '🔬 Analizar fotos con IA'}
             </button>
             <div style={{ marginTop: 11 }}>
-              {!diagnosed && !diagnosing && (
+              {!photos.length && !diagnosing && (
                 <div className="alert" style={{ color: 'var(--gris)' }}>
-                  Pulsa &quot;Analizar&quot;. El diagnóstico llega solo y propone partidas previas.
+                  Adjunta fotos del techo o área (daño, charcos, óxido, bajantes). Con ellas la IA detecta los daños y propone partidas.
                 </div>
               )}
               {diagnosing && <div className="alert b">Analizando fotos contra el árbol de fallas…</div>}
-              {diagnosed && (
-                <>
-                  <div className="alert r"><b>Crítico</b> · Encharcamiento NE → partida corrección de pendiente</div>
-                  <div className="alert r"><b>Crítico</b> · Ampollas 15% → partida retiro</div>
-                  <div className="alert y"><b>Alto</b> · Fisuras pretil sur → partida resane</div>
-                  <div className="alert y"><b>Alto</b> · Bajante 2 sin refuerzo → partida refuerzo</div>
-                  <div className="alert g">
-                    <b>Recomendación:</b> Rollo SBS 4.5 mm (encharcamiento + tránsito). Alternativa: acrílico solo con pendiente corregida al 100%.
+              {analysisMode === 'fallback' && !diagnosing && (
+                <div className="alert y">{recommendation || 'La IA no está disponible ahora: puedes continuar sin diagnóstico.'}</div>
+              )}
+              {analysisMode === 'gemini' && findings.length === 0 && !diagnosing && (
+                <div className="alert g">La IA no detectó daños evidentes en las fotos. Revisa en sitio antes de enviar.</div>
+              )}
+              {analysisMode === 'gemini' &&
+                findings.map((f, i) => (
+                  <div
+                    className={`alert ${f.severity === 'Crítico' ? 'r' : f.severity === 'Alto' ? 'y' : 'b'}`}
+                    key={i}
+                  >
+                    <b>{f.severity}</b> · {f.title}
+                    {f.detail ? <span className="mini"> — {f.detail}</span> : null}
                   </div>
-                </>
+                ))}
+              {analysisMode === 'gemini' && recommendation && (
+                <div className="alert g">
+                  <b>Recomendación:</b> {recommendation}
+                </div>
               )}
             </div>
           </div>

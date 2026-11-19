@@ -19,7 +19,16 @@ export interface GeminiResult {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function askGemini(system: string, userText: string, maxTokens = 900): Promise<GeminiResult> {
+type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
+
+/** Convierte un dataURL (data:image/jpeg;base64,…) en una parte inline_data para la API. */
+function dataUrlPart(dataUrl: string): Part | null {
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+  if (!match) return null;
+  return { inline_data: { mime_type: match[1], data: match[2] } };
+}
+
+async function callGemini(parts: Part[], maxTokens: number): Promise<GeminiResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return { text: null, mode: 'fallback', reason: 'no-key' };
 
@@ -35,7 +44,7 @@ export async function askGemini(system: string, userText: string, maxTokens = 90
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `${system}\n\n${userText}` }] }],
+        contents: [{ role: 'user', parts }],
         generationConfig
       })
     });
@@ -57,8 +66,8 @@ export async function askGemini(system: string, userText: string, maxTokens = 90
       const res = await request(attempt.model);
       if (res.ok) {
         const json = await res.json();
-        const parts = json.candidates?.[0]?.content?.parts || [];
-        const raw = parts
+        const candidates = json.candidates?.[0]?.content?.parts || [];
+        const raw = candidates
           .filter((p: { text?: string; thought?: boolean }) => p.text && !p.thought)
           .map((p: { text: string }) => p.text)
           .join('')
@@ -80,4 +89,24 @@ export async function askGemini(system: string, userText: string, maxTokens = 90
   }
 
   return { text: null, mode: 'fallback', reason: lastStatus ? `http-${lastStatus}` : 'network' };
+}
+
+export async function askGemini(system: string, userText: string, maxTokens = 900): Promise<GeminiResult> {
+  return callGemini([{ text: `${system}\n\n${userText}` }], maxTokens);
+}
+
+/** Análisis de imágenes (fotos del área) con la misma política de reintento y fallback. */
+export async function askGeminiVision(
+  system: string,
+  images: string[],
+  userText: string,
+  maxTokens = 900
+): Promise<GeminiResult> {
+  const parts: Part[] = [{ text: `${system}\n\n${userText}` }];
+  for (const img of images.slice(0, 8)) {
+    const p = dataUrlPart(img);
+    if (p) parts.push(p);
+  }
+  if (parts.length === 1) return { text: null, mode: 'fallback', reason: 'no-valid-images' };
+  return callGemini(parts, maxTokens);
 }

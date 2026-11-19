@@ -56,6 +56,7 @@ const QuoteSchema = z.object({
   discount: z.number().min(0).max(95).default(0),
   provider: z.string().default('nac'),
   extras: z.array(ExtraSchema).default([]),
+  photoIds: z.array(z.string()).default([]), // fotos del área adjuntadas en el diagnóstico
   send: z.boolean().default(false)
 });
 
@@ -214,6 +215,14 @@ export async function saveQuoteAction(payload: QuotePayload): Promise<{ ok: bool
   await prisma.quoteEvent.create({
     data: { quoteId: quote.id, type: data.send ? 'SENT' : 'CREATED', detail: data.send ? 'Enviada por WhatsApp (demo)' : 'Borrador guardado' }
   });
+
+  // Vincula las fotos del área adjuntadas en el diagnóstico a esta cotización.
+  if (data.photoIds.length) {
+    await prisma.quotePhoto.updateMany({
+      where: { id: { in: data.photoIds }, quoteId: null },
+      data: { quoteId: quote.id }
+    });
+  }
 
   if (data.send) {
     const lead = await prisma.lead.findFirst({ where: { unitId, company: data.clientName } });

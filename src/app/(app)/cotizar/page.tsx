@@ -37,7 +37,10 @@ export default async function CotizarPage({
   // Re-edición de una cotización guardada: se cargan sus datos y el wizard actualiza el mismo folio.
   let quoteData: QuoteEditData | null = null;
   if (params.quote) {
-    const q = await prisma.quote.findUnique({ where: { id: params.quote }, include: { extras: true } });
+    const q = await prisma.quote.findUnique({
+      where: { id: params.quote },
+      include: { extras: true, diagnosisPhotos: { orderBy: { createdAt: 'asc' } } }
+    });
     if (q && (!unitId || q.unitId === unitId)) {
       quoteData = {
         id: q.id,
@@ -80,7 +83,8 @@ export default async function CotizarPage({
           costFactor: e.costFactor,
           enabled: e.enabled,
           sourceLabel: e.sourceLabel || undefined
-        }))
+        })),
+        photos: q.diagnosisPhotos.map((p) => ({ id: p.id, dataUrl: p.dataUrl }))
       };
     }
   }

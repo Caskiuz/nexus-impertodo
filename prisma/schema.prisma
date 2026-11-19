@@ -160,6 +160,7 @@ model Quote {
   extras          QuoteExtra[]
   events          QuoteEvent[]
   ot              OT?
+  diagnosisPhotos QuotePhoto[]
 }
 
 model QuoteExtra {
@@ -181,6 +182,17 @@ model QuoteEvent {
   quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   type      String // OPEN | QUESTION | APPROVED | SENT | CREATED
   detail    String?
+  createdAt DateTime @default(now())
+}
+
+// Evidencia fotográfica del área adjuntada en el diagnóstico de la cotización.
+// Se sube de inmediato (quoteId nulo = en borrador) y se vincula al guardar la cotización.
+model QuotePhoto {
+  id        String   @id @default(cuid())
+  quoteId   String?
+  quote     Quote?   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  dataUrl   String
+  summary   String?  // nota de la IA sobre esta foto (opcional)
   createdAt DateTime @default(now())
 }
 
