@@ -9,10 +9,22 @@ import { notify } from '@/lib/events';
 // Roles con autorización para modificar datos maestros del inventario.
 const CAN_EDIT_INVENTORY = ['GERENCIA', 'DEV'];
 
+/**
+ * Convierte lo capturado a número aceptando coma decimal ("2,5" → 2.5).
+ * Vacío o inválido conserva el valor anterior (fallback).
+ * El 0 ES un valor válido: nunca se reemplaza por el anterior.
+ */
+function parseQtyField(formData: FormData, key: string, fallback: number): number {
+  const raw = String(formData.get(key) ?? '').trim().replace(',', '.');
+  if (!raw) return fallback;
+  const v = parseFloat(raw);
+  return Number.isFinite(v) ? Math.max(0, v) : fallback;
+}
+
 export async function addStockAction(formData: FormData) {
   const user = await requireUser();
   const itemId = String(formData.get('itemId') || '');
-  const qty = Math.abs(parseFloat(String(formData.get('qty') || '0')) || 0);
+  const qty = Math.abs(parseQtyField(formData, 'qty', 0));
   const kind = String(formData.get('kind') || 'ENTRADA').toUpperCase() === 'SALIDA' ? 'SALIDA' : 'ENTRADA';
   const docRef = String(formData.get('docRef') || '').trim();
   const item = await prisma.inventoryItem.findUnique({ where: { id: itemId } });
@@ -61,9 +73,9 @@ export async function createProductAction(formData: FormData) {
 
   const name = String(formData.get('name') || '').trim();
   const unitName = String(formData.get('unitName') || '').trim() || 'cubeta';
-  const stock = Math.max(0, parseFloat(String(formData.get('stock') || '0')) || 0);
-  const min = Math.max(0, parseFloat(String(formData.get('min') || '0')) || 0);
-  const cost = Math.max(0, parseFloat(String(formData.get('cost') || '0')) || 0);
+  const stock = parseQtyField(formData, 'stock', 0);
+  const min = parseQtyField(formData, 'min', 0);
+  const cost = parseQtyField(formData, 'cost', 0);
   const provider = String(formData.get('provider') || '').trim() || 'PROSEALMASTER';
 
   if (!name) redirect('/inventario?err=alta');
@@ -109,8 +121,8 @@ export async function updateProductAction(formData: FormData) {
   const name = String(formData.get('name') || '').trim();
   if (!name) redirect(`/inventario?edit=${id}&err=alta`);
   const unitName = String(formData.get('unitName') || '').trim() || item.unitName;
-  const min = Math.max(0, parseFloat(String(formData.get('min') || String(item.min))) || item.min);
-  const cost = Math.max(0, parseFloat(String(formData.get('cost') || String(item.cost))) || item.cost);
+  const min = parseQtyField(formData, 'min', item.min);
+  const cost = parseQtyField(formData, 'cost', item.cost);
   const provider = String(formData.get('provider') || '').trim() || item.provider;
 
   await prisma.inventoryItem.update({ where: { id }, data: { name, unitName, min, cost, provider } });
