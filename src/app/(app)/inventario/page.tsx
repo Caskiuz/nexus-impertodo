@@ -23,6 +23,16 @@ export default async function InventarioPage({
   const movementsRaw = await prisma.stockMovement.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
   const audit = await prisma.auditLog.findMany({ where: { module: 'inventario' }, orderBy: { createdAt: 'desc' }, take: 20 });
 
+  // Kardex tipo Excel: filas = productos, columnas = últimos 12 movimientos en orden cronológico.
+  const kardexTotal = await prisma.stockMovement.count();
+  const kardexCols = [...movementsRaw.slice(0, 12)].reverse();
+  const kardexStart = Math.max(1, kardexTotal - kardexCols.length + 1);
+  const kardexByItem = new Map<string, Map<string, (typeof movementsRaw)[number]>>();
+  for (const m of movementsRaw) {
+    if (!kardexByItem.has(m.itemId)) kardexByItem.set(m.itemId, new Map());
+    kardexByItem.get(m.itemId)!.set(m.id, m);
+  }
+
   const factor = settings?.provider === 'psm' ? 0.7 : 1;
   const value = items.reduce((x, i) => x + i.stock * i.cost * factor, 0);
   const low = items.filter((i) => i.stock < i.min);
@@ -305,7 +315,77 @@ export default async function InventarioPage({
 
       <div className="card tbl" style={{ marginTop: 14 }}>
         <div className="sec" style={{ padding: '14px 14px 0' }}>
+          Kardex por producto <span className="badge">como Excel · cada columna es un movimiento</span>
+          <a className="btn sm primary" href="/api/inventario/export" style={{ marginLeft: 10 }} title="Descargar inventario y kardex en Excel">
+            ⬇ Exportar a Excel
+          </a>
+        </div>
+        <div className="mini" style={{ padding: '4px 14px 8px' }}>
+          Filas = productos, columnas = movimientos en orden (1, 2, 3…): verde entrada, rojo salida, con la remisión o factura que los
+          respalda. Aquí se ven los últimos 12; en el Excel salen <b>todos</b> con colores.
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th className="num">Stock actual</th>
+                {kardexCols.map((m, idx) => (
+                  <th key={m.id} className="num">
+                    {kardexStart + idx} · {m.docRef || m.reason}
+                    <div className="mini">{m.createdAt.toLocaleDateString('es-MX')}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((i) => {
+                const st = i.stock <= 0 ? 'bad' : i.stock < i.min ? 'warn' : 'ok';
+                const own = kardexByItem.get(i.id);
+                return (
+                  <tr key={i.id}>
+                    <td>
+                      <b>{i.name}</b>
+                    </td>
+                    <td className="num">
+                      <span className={`badge ${st}`}>
+                        {i.stock} {i.unitName}
+                      </span>
+                    </td>
+                    {kardexCols.map((m) => {
+                      const mv = own?.get(m.id);
+                      return (
+                        <td key={m.id} className="num">
+                          {mv ? (
+                            <span className={`badge ${mv.type === 'ENTRADA' ? 'ok' : 'bad'}`}>
+                              {mv.type === 'ENTRADA' ? '+' : '−'}
+                              {Math.abs(mv.qty)} {i.unitName}
+                            </span>
+                          ) : (
+                            <span className="mini">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {kardexTotal > kardexCols.length && (
+          <div className="mini" style={{ padding: '8px 14px' }}>
+            Mostrando los últimos {kardexCols.length} de {kardexTotal} movimientos · el Excel incluye el historial completo.
+          </div>
+        )}
+      </div>
+
+      <div className="card tbl" style={{ marginTop: 14 }}>
+        <div className="sec" style={{ padding: '14px 14px 0' }}>
           Movimientos del inventario <span className="badge">fecha · documento · entrada/salida · saldo</span>
+          <a className="btn sm" href="/api/inventario/export" style={{ marginLeft: 10 }}>
+            ⬇ Excel
+          </a>
         </div>
         <div className="mini" style={{ padding: '4px 14px 8px' }}>
           Desglose de cada movimiento: la factura o remisión que lo respalda, el usuario que lo registró y el saldo que dejó. Filtro:{' '}
