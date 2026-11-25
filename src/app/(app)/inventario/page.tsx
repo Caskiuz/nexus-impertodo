@@ -7,6 +7,18 @@ import ProductPhotoManager from '@/components/ProductPhotoManager';
 import Link from 'next/link';
 import { addStockAction, suggestOrderAction, createProductAction, updateProductAction, deleteProductAction } from './actions';
 
+// Los movimientos anteriores a la columna `type` registraban las salidas con cantidad negativa.
+function esSalida(mov: { type: string; qty: number }): boolean {
+  return mov.type === 'SALIDA' || mov.qty < 0;
+}
+
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dayLabel = (key: string) => {
+  const [, m, d] = key.split('-');
+  return `${d}/${m}`;
+};
+
 export default async function InventarioPage({
   searchParams
 }: {
@@ -33,6 +45,22 @@ export default async function InventarioPage({
     kardexByItem.get(m.itemId)!.set(m.id, m);
   }
 
+  // Consumos diarios estilo Excel: filas = productos, columnas = últimos 10 días con salidas.
+  const salidasRaw = await prisma.stockMovement.findMany({
+    where: { OR: [{ type: 'SALIDA' }, { qty: { lt: 0 } }] },
+    orderBy: { createdAt: 'asc' }
+  });
+  const consumoDays = Array.from(new Set(salidasRaw.map((m) => dayKey(m.createdAt)))).slice(-10);
+  const consumoDaysSet = new Set(consumoDays);
+  const consumoByItem = new Map<string, Map<string, number>>();
+  for (const m of salidasRaw) {
+    const k = dayKey(m.createdAt);
+    if (!consumoDaysSet.has(k)) continue;
+    if (!consumoByItem.has(m.itemId)) consumoByItem.set(m.itemId, new Map());
+    const map = consumoByItem.get(m.itemId)!;
+    map.set(k, Math.round(((map.get(k) || 0) + Math.abs(m.qty)) * 100) / 100);
+  }
+
   const factor = settings?.provider === 'psm' ? 0.7 : 1;
   const value = items.reduce((x, i) => x + i.stock * i.cost * factor, 0);
   const low = items.filter((i) => i.stock < i.min);
@@ -46,13 +74,27 @@ export default async function InventarioPage({
 
   return (
     <>
-      <div className="head">
+      <div className="head" id="top">
         <div>
           <div className="eyebrow">Almacén</div>
           <h1>Inventario PROSEALMASTER</h1>
           <div className="sub">
             Stock, mínimos y pedido propuesto. Los datos maestros solo los modifican Gerencia y el desarrollador; todo queda en bitácora.
           </div>
+        </div>
+        <div className="actions">
+          <a className="btn sm" href="#consumos">
+            📅 Consumos diarios
+          </a>
+          <a className="btn sm" href="#kardex">
+            🧾 Kardex
+          </a>
+          <a className="btn sm" href="#movimientos">
+            📋 Movimientos
+          </a>
+          <a className="btn sm" href="#bitacora">
+            📜 Bitácora
+          </a>
         </div>
       </div>
       {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado con su documento y saldo.</div>}
@@ -313,11 +355,79 @@ export default async function InventarioPage({
         )}
       </div>
 
-      <div className="card tbl" style={{ marginTop: 14 }}>
+      <div className="card tbl anchor-target" id="consumos" style={{ marginTop: 14 }}>
+        <div className="sec" style={{ padding: '14px 14px 0' }}>
+          Consumos diarios <span className="badge">salidas por fecha · estilo Excel</span>
+          <a className="btn sm primary" href="/api/inventario/export" style={{ marginLeft: 10 }} title="Incluye la hoja Consumos en el Excel">
+            ⬇ Exportar a Excel
+          </a>
+          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+            ⬆ Inicio
+          </a>
+        </div>
+        <div className="mini" style={{ padding: '4px 14px 8px' }}>
+          Cuánto se gastó de cada producto cada día (solo salidas): filas = productos, columnas = últimos 10 días con consumo. También sale
+          en el Excel, hoja &quot;Consumos&quot; con todos los días.
+        </div>
+        {consumoDays.length ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  {consumoDays.map((d) => (
+                    <th key={d} className="num">
+                      {dayLabel(d)}
+                    </th>
+                  ))}
+                  <th className="num">Total período</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i) => {
+                  const row = consumoByItem.get(i.id);
+                  const rowTotal = consumoDays.reduce((s, d) => s + (row?.get(d) || 0), 0);
+                  return (
+                    <tr key={i.id}>
+                      <td>
+                        <b>{i.name}</b>
+                      </td>
+                      {consumoDays.map((d) => {
+                        const v = row?.get(d) || 0;
+                        return (
+                          <td key={d} className="num">
+                            {v ? (
+                              <span className="badge bad">
+                                −{v} {i.unitName}
+                              </span>
+                            ) : (
+                              <span className="mini">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="num">{rowTotal ? <b>{rowTotal} {i.unitName}</b> : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="alert b" style={{ margin: 14 }}>
+            Sin salidas registradas todavía. Cada salida que registres (con su factura o remisión) aparecerá aquí agrupada por fecha.
+          </div>
+        )}
+      </div>
+
+      <div className="card tbl anchor-target" id="kardex" style={{ marginTop: 14 }}>
         <div className="sec" style={{ padding: '14px 14px 0' }}>
           Kardex por producto <span className="badge">como Excel · cada columna es un movimiento</span>
           <a className="btn sm primary" href="/api/inventario/export" style={{ marginLeft: 10 }} title="Descargar inventario y kardex en Excel">
             ⬇ Exportar a Excel
+          </a>
+          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+            ⬆ Inicio
           </a>
         </div>
         <div className="mini" style={{ padding: '4px 14px 8px' }}>
@@ -354,11 +464,12 @@ export default async function InventarioPage({
                     </td>
                     {kardexCols.map((m) => {
                       const mv = own?.get(m.id);
+                      const salida = mv ? esSalida(mv) : false;
                       return (
                         <td key={m.id} className="num">
                           {mv ? (
-                            <span className={`badge ${mv.type === 'ENTRADA' ? 'ok' : 'bad'}`}>
-                              {mv.type === 'ENTRADA' ? '+' : '−'}
+                            <span className={`badge ${salida ? 'bad' : 'ok'}`}>
+                              {salida ? '−' : '+'}
                               {Math.abs(mv.qty)} {i.unitName}
                             </span>
                           ) : (
@@ -380,11 +491,14 @@ export default async function InventarioPage({
         )}
       </div>
 
-      <div className="card tbl" style={{ marginTop: 14 }}>
+      <div className="card tbl anchor-target" id="movimientos" style={{ marginTop: 14 }}>
         <div className="sec" style={{ padding: '14px 14px 0' }}>
           Movimientos del inventario <span className="badge">fecha · documento · entrada/salida · saldo</span>
           <a className="btn sm" href="/api/inventario/export" style={{ marginLeft: 10 }}>
             ⬇ Excel
+          </a>
+          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+            ⬆ Inicio
           </a>
         </div>
         <div className="mini" style={{ padding: '4px 14px 8px' }}>
@@ -423,10 +537,10 @@ export default async function InventarioPage({
                     <b>{it?.name || 'Producto eliminado'}</b>
                   </td>
                   <td>
-                    <span className={`badge ${m.type === 'ENTRADA' ? 'ok' : 'warn'}`}>{m.type}</span>
+                    <span className={`badge ${esSalida(m) ? 'bad' : 'ok'}`}>{esSalida(m) ? 'SALIDA' : 'ENTRADA'}</span>
                   </td>
                   <td className="num">
-                    {m.type === 'ENTRADA' ? '+' : '−'}
+                    {esSalida(m) ? '−' : '+'}
                     {Math.abs(m.qty)} {it?.unitName || ''}
                   </td>
                   <td className="num">{m.balance ?? '—'}</td>
@@ -456,9 +570,12 @@ export default async function InventarioPage({
         )}
       </div>
 
-      <div className="card panel" style={{ marginTop: 14 }}>
+      <div className="card panel anchor-target" id="bitacora" style={{ marginTop: 14 }}>
         <div className="sec">
           Bitácora de modificaciones <span className="badge">quién cambió qué, con antes → después</span>
+          <a className="btn sm" href="#top" style={{ marginLeft: 10 }}>
+            ⬆ Inicio
+          </a>
         </div>
         {audit.map((a) => (
           <div className="rule" key={a.id}>
