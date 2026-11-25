@@ -6,6 +6,7 @@ import SmartImage from '@/components/SmartImage';
 import ProductPhotoManager from '@/components/ProductPhotoManager';
 import Link from 'next/link';
 import { addStockAction, suggestOrderAction, createProductAction, updateProductAction, deleteProductAction } from './actions';
+import InventorySectionsControls from '@/components/InventorySectionsControls';
 
 // Los movimientos anteriores a la columna `type` registraban las salidas con cantidad negativa.
 function esSalida(mov: { type: string; qty: number }): boolean {
@@ -95,6 +96,7 @@ export default async function InventarioPage({
           <a className="btn sm" href="#bitacora">
             📜 Bitácora
           </a>
+          <InventorySectionsControls />
         </div>
       </div>
       {sp.msg === 'movimiento' && <div className="alert g">Movimiento de inventario registrado con su documento y saldo.</div>}
@@ -355,13 +357,15 @@ export default async function InventarioPage({
         )}
       </div>
 
-      <div className="card tbl anchor-target" id="consumos" style={{ marginTop: 14 }}>
-        <div className="sec" style={{ padding: '14px 14px 0' }}>
-          Consumos diarios <span className="badge">salidas por fecha · estilo Excel</span>
-          <a className="btn sm primary" href="/api/inventario/export" style={{ marginLeft: 10 }} title="Incluye la hoja Consumos en el Excel">
+      <details className="card tbl anchor-target" id="consumos" data-inv-section="true" style={{ marginTop: 14 }}>
+        <summary className="sec" style={{ padding: '14px 14px 10px', cursor: 'pointer' }}>
+          📅 Consumos diarios <span className="badge">salidas por fecha · clic para abrir</span>
+        </summary>
+        <div style={{ padding: '0 14px 8px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a className="btn sm primary" href="/api/inventario/export" title="Incluye la hoja Consumos en el Excel">
             ⬇ Exportar a Excel
           </a>
-          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+          <a className="btn sm" href="#top">
             ⬆ Inicio
           </a>
         </div>
@@ -418,15 +422,17 @@ export default async function InventarioPage({
             Sin salidas registradas todavía. Cada salida que registres (con su factura o remisión) aparecerá aquí agrupada por fecha.
           </div>
         )}
-      </div>
+      </details>
 
-      <div className="card tbl anchor-target" id="kardex" style={{ marginTop: 14 }}>
-        <div className="sec" style={{ padding: '14px 14px 0' }}>
-          Kardex por producto <span className="badge">como Excel · cada columna es un movimiento</span>
-          <a className="btn sm primary" href="/api/inventario/export" style={{ marginLeft: 10 }} title="Descargar inventario y kardex en Excel">
+      <details className="card tbl anchor-target" id="kardex" data-inv-section="true" style={{ marginTop: 14 }}>
+        <summary className="sec" style={{ padding: '14px 14px 10px', cursor: 'pointer' }}>
+          🧾 Kardex por producto <span className="badge">como Excel · clic para abrir</span>
+        </summary>
+        <div style={{ padding: '0 14px 8px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a className="btn sm primary" href="/api/inventario/export" title="Descargar inventario y kardex en Excel">
             ⬇ Exportar a Excel
           </a>
-          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+          <a className="btn sm" href="#top">
             ⬆ Inicio
           </a>
         </div>
@@ -489,15 +495,17 @@ export default async function InventarioPage({
             Mostrando los últimos {kardexCols.length} de {kardexTotal} movimientos · el Excel incluye el historial completo.
           </div>
         )}
-      </div>
+      </details>
 
-      <div className="card tbl anchor-target" id="movimientos" style={{ marginTop: 14 }}>
-        <div className="sec" style={{ padding: '14px 14px 0' }}>
-          Movimientos del inventario <span className="badge">fecha · documento · entrada/salida · saldo</span>
-          <a className="btn sm" href="/api/inventario/export" style={{ marginLeft: 10 }}>
+      <details className="card tbl anchor-target" id="movimientos" data-inv-section="true" style={{ marginTop: 14 }}>
+        <summary className="sec" style={{ padding: '14px 14px 10px', cursor: 'pointer' }}>
+          📋 Movimientos del inventario <span className="badge">fecha · documento · saldo · clic para abrir</span>
+        </summary>
+        <div style={{ padding: '0 14px 8px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a className="btn sm" href="/api/inventario/export">
             ⬇ Excel
           </a>
-          <a className="btn sm" href="#top" style={{ marginLeft: 6 }}>
+          <a className="btn sm" href="#top">
             ⬆ Inicio
           </a>
         </div>
@@ -568,15 +576,16 @@ export default async function InventarioPage({
             Mostrando solo movimientos de <b>{filterItem.name}</b> · <Link href="/inventario">quitar filtro</Link>
           </div>
         )}
-      </div>
+      </details>
 
-      <div className="card panel anchor-target" id="bitacora" style={{ marginTop: 14 }}>
-        <div className="sec">
-          Bitácora de modificaciones <span className="badge">quién cambió qué, con antes → después</span>
+      <details className="card panel anchor-target" id="bitacora" data-inv-section="true" style={{ marginTop: 14 }}>
+        <summary className="sec" style={{ cursor: 'pointer' }}>
+          📜 Bitácora de modificaciones <span className="badge">quién cambió qué · clic para abrir</span>
           <a className="btn sm" href="#top" style={{ marginLeft: 10 }}>
             ⬆ Inicio
           </a>
-        </div>
+        </summary>
+        <div style={{ padding: '2px 0 0' }}>
         {audit.map((a) => (
           <div className="rule" key={a.id}>
             <span className="ic info">i</span>
@@ -590,7 +599,8 @@ export default async function InventarioPage({
           </div>
         ))}
         {!audit.length && <div className="mini">Sin modificaciones registradas todavía: cada alta, cambio o movimiento aparecerá aquí.</div>}
-      </div>
+        </div>
+      </details>
 
       <div className="mini" style={{ marginTop: 10 }}>
         El descuento por OT se registra al avanzar fases en Obra. La recepción real de material se captura aquí.
