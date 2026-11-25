@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import ExcelJS from 'exceljs';
+import { dateStr, dateTimeStr, dayKeyMX } from '@/lib/constants';
 
 // Colores estilo Excel: entradas verdes, salidas rojas.
 const FILL_ENTRADA = 'C6EFCE';
@@ -15,8 +16,6 @@ const FILL_STOCK_SIN = 'FFC7CE';
 
 // Los movimientos anteriores a la columna `type` guardaban las salidas con cantidad negativa.
 const esSalida = (m: { type: string; qty: number }) => m.type === 'SALIDA' || m.qty < 0;
-const dayKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export async function GET() {
   const session = await auth();
@@ -41,7 +40,7 @@ export async function GET() {
   kardex.getRow(1).values = [
     'Producto',
     'Stock actual',
-    ...movements.map((m, i) => `${i + 1} ${m.docRef || m.reason} · ${m.createdAt.toLocaleDateString('es-MX')}`)
+    ...movements.map((m, i) => `${i + 1} ${m.docRef || m.reason} · ${dateStr(m.createdAt)}`)
   ];
   kardex.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   kardex.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + FILL_HEADER } };
@@ -106,7 +105,7 @@ export async function GET() {
     const it = itemMap.get(m.itemId);
     const salida = esSalida(m);
     const row = mov.addRow([
-      m.createdAt.toLocaleString('es-MX'),
+      dateTimeStr(m.createdAt),
       it?.name || 'Producto eliminado',
       salida ? 'SALIDA' : 'ENTRADA',
       `${salida ? '−' : '+'}${Math.abs(m.qty)} ${it?.unitName || ''}`,
@@ -148,7 +147,7 @@ export async function GET() {
 
   // ---------- Hoja 4: Consumos diarios (salidas por fecha, estilo Excel) ----------
   const salidas = movements.filter(esSalida);
-  const dias = Array.from(new Set(salidas.map((m) => dayKey(m.createdAt))));
+  const dias = Array.from(new Set(salidas.map((m) => dayKeyMX(m.createdAt))));
   const consumos = wb.addWorksheet('Consumos', {
     views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }]
   });
@@ -165,7 +164,7 @@ export async function GET() {
   for (const m of salidas) {
     if (!consumoPorItem.has(m.itemId)) consumoPorItem.set(m.itemId, new Map());
     const map = consumoPorItem.get(m.itemId)!;
-    const k = dayKey(m.createdAt);
+    const k = dayKeyMX(m.createdAt);
     map.set(k, Math.round(((map.get(k) || 0) + Math.abs(m.qty)) * 100) / 100);
   }
   for (const item of items) {
@@ -182,7 +181,7 @@ export async function GET() {
   }
 
   const buffer = await wb.xlsx.writeBuffer();
-  const fecha = new Date().toISOString().slice(0, 10);
+  const fecha = dayKeyMX(new Date());
 
   return new NextResponse(buffer as ArrayBuffer, {
     status: 200,

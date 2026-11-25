@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
-import { fmt } from '@/lib/constants';
+import { fmt, dateStr, dateFullStr, dateTimeStr, timeStr, dayKeyMX } from '@/lib/constants';
 import { inventoryImage, inventorySvg } from '@/lib/images';
 import SmartImage from '@/components/SmartImage';
 import ProductPhotoManager from '@/components/ProductPhotoManager';
@@ -12,8 +12,6 @@ function esSalida(mov: { type: string; qty: number }): boolean {
   return mov.type === 'SALIDA' || mov.qty < 0;
 }
 
-const dayKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const dayLabel = (key: string) => {
   const [, m, d] = key.split('-');
   return `${d}/${m}`;
@@ -61,11 +59,11 @@ export default async function InventarioPage({
     where: { OR: [{ type: 'SALIDA' }, { qty: { lt: 0 } }] },
     orderBy: { createdAt: 'asc' }
   });
-  const consumoDays = Array.from(new Set(salidasRaw.map((m) => dayKey(m.createdAt)))).slice(-10);
+  const consumoDays = Array.from(new Set(salidasRaw.map((m) => dayKeyMX(m.createdAt)))).slice(-10);
   const consumoDaysSet = new Set(consumoDays);
   const consumoByItem = new Map<string, Map<string, number>>();
   for (const m of salidasRaw) {
-    const k = dayKey(m.createdAt);
+    const k = dayKeyMX(m.createdAt);
     if (!consumoDaysSet.has(k)) continue;
     if (!consumoByItem.has(m.itemId)) consumoByItem.set(m.itemId, new Map());
     const map = consumoByItem.get(m.itemId)!;
@@ -483,7 +481,7 @@ export default async function InventarioPage({
                   {kardexCols.map((m, idx) => (
                     <th key={m.id} className="num">
                       {kardexStart + idx} · {m.docRef || m.reason}
-                      <div className="mini">{m.createdAt.toLocaleDateString('es-MX')}</div>
+                      <div className="mini">{dateStr(m.createdAt)}</div>
                     </th>
                   ))}
                 </tr>
@@ -575,8 +573,8 @@ export default async function InventarioPage({
                 return (
                   <tr key={m.id}>
                     <td>
-                      {m.createdAt.toLocaleDateString('es-MX')}{' '}
-                      <span className="mini">{m.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+                      {dateFullStr(m.createdAt)}{' '}
+                      <span className="mini">{timeStr(m.createdAt)}</span>
                     </td>
                     <td>
                       <b>{it?.name || 'Producto eliminado'}</b>
@@ -627,7 +625,7 @@ export default async function InventarioPage({
                 <b>{a.action}</b>
                 {a.ref && <div className="mini">{a.ref}</div>}
                 <div className="mini">
-                  {a.createdAt.toLocaleString('es-MX')} · {a.userName || 'sistema'} · rol {a.role || '—'}
+                  {dateTimeStr(a.createdAt)} · {a.userName || 'sistema'} · rol {a.role || '—'}
                 </div>
               </div>
             </div>

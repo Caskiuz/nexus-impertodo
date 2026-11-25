@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { getActiveUnitId, type SessionUser } from '@/lib/session';
 import { askGemini } from '@/lib/gemini';
+import { dayKeyMX } from '@/lib/constants';
 
 function fmtMoney(n: number) {
   return '$' + Math.round(n || 0).toLocaleString('es-MX');
@@ -34,7 +35,7 @@ async function buildContext(user: SessionUser, unitId: string | null) {
   const lowStock = inventory.filter((i) => i.stock < i.min);
 
   const lines = [
-    `Fecha: ${new Date().toLocaleDateString('es-MX')}`,
+    `Fecha: ${dayKeyMX(new Date())}`,
     `Usuario: ${user.name} · rol ${user.role}`,
     `Unidad activa: ${unitId ? me?.name || 'unidad' : 'todas las unidades (vista central)'}`,
     `Catálogo: ${quotes.length} cotizaciones, margen promedio ${(avgMargin * 100).toFixed(0)}%, piso de margen ${settings?.floor ?? 30}%.`,

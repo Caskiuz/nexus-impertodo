@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { computeQuote, type QuoteInput, type SystemDef } from '@/lib/calc';
-import { fmt, fmt2, isoDate } from '@/lib/constants';
+import { fmt, fmt2, isoDate, dateTimeStr } from '@/lib/constants';
 import { systemImage, systemSvg } from '@/lib/images';
 import SmartImage from './SmartImage';
 import PhotoCredit from './PhotoCredit';
@@ -179,7 +179,7 @@ export default async function ProposalView({ folio, mode }: { folio: string; mod
                     </span>
                     <div>
                       <b>{ev.type}</b> · {ev.detail || '—'}
-                      <div className="mini">{ev.createdAt.toLocaleString('es-MX')}</div>
+                      <div className="mini">{dateTimeStr(ev.createdAt)}</div>
                     </div>
                   </div>
                 ))}

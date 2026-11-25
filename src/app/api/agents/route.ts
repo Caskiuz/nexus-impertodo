@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { getActiveUnitId, type SessionUser } from '@/lib/session';
 import { askGemini } from '@/lib/gemini';
+import { dateStr } from '@/lib/constants';
 
 type AgentKey = 'documentos' | 'comercial' | 'tecnico' | 'financiero' | 'compras' | 'licitaciones';
 
@@ -53,7 +54,7 @@ async function buildContext(agent: AgentKey, unitId: string | null): Promise<str
     );
     const invLines = invoices
       .filter((i) => i.status === 'PENDIENTE')
-      .map((i) => `${i.clientName} · ${i.folio} · ${fmt(i.amount)} · vence ${i.dueDate.toLocaleDateString('es-MX')}${i.dueDate < new Date() ? ' · VENCIDA' : ''}`);
+      .map((i) => `${i.clientName} · ${i.folio} · ${fmt(i.amount)} · vence ${dateStr(i.dueDate)}${i.dueDate < new Date() ? ' · VENCIDA' : ''}`);
     const low = quotes.filter((q) => q.margin * 100 < q.floor && q.status !== 'APROBADA');
     const lowLines = low.map((q) => `${q.folio} · ${q.clientName} · margen ${(q.margin * 100).toFixed(0)}% vs piso ${q.floor}% · estado ${q.status}`);
     return [
@@ -100,7 +101,7 @@ async function buildContext(agent: AgentKey, unitId: string | null): Promise<str
 
   const tenders = await prisma.tender.findMany({ where: scope, orderBy: { openingDate: 'asc' } });
   const lines = tenders.map(
-    (t) => `${t.convener} · ${t.object} · apertura ${t.openingDate.toLocaleDateString('es-MX')} · match ${t.match}% · estado ${t.status}`
+    (t) => `${t.convener} · ${t.object} · apertura ${dateStr(t.openingDate)} · match ${t.match}% · estado ${t.status}`
   );
   return `Licitaciones:\n${lines.join('\n') || 'sin licitaciones registradas'}`;
 }

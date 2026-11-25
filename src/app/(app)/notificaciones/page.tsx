@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/session';
-import { dateStr } from '@/lib/constants';
+import { dateStr, dateTimeStr } from '@/lib/constants';
 import Link from 'next/link';
 import { markNotificationReadAction, markAllNotificationsReadAction } from './actions';
 
@@ -60,7 +60,7 @@ export default async function NotificacionesPage({ searchParams }: { searchParam
                 <b>{n.title}</b> <span className={`badge ${k.cls}`}>{k.label}</span>
                 {!n.read && <span className="badge bad">Nuevo</span>}
                 <div className="mini">{n.body}</div>
-                <div className="mini">{n.createdAt.toLocaleString('es-MX')}</div>
+                <div className="mini">{dateTimeStr(n.createdAt)}</div>
               </div>
               {!n.read && (
                 <form action={markNotificationReadAction}>

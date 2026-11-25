@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
-import { fmt, dateStr } from '@/lib/constants';
+import { fmt, dateStr, dateTimeStr } from '@/lib/constants';
 import { remindInvoiceAction, payInvoiceAction, addCollectionNoteAction } from './actions';
 
 export default async function CobrarPage({ searchParams }: { searchParams: Promise<{ q?: string; msg?: string; err?: string; client?: string }> }) {
@@ -150,7 +150,7 @@ export default async function CobrarPage({ searchParams }: { searchParams: Promi
               <div>
                 {n.note}
                 <div className="mini">
-                  {n.createdAt.toLocaleString('es-MX')} · {n.userName || '—'}
+                  {dateTimeStr(n.createdAt)} · {n.userName || '—'}
                 </div>
               </div>
             </div>

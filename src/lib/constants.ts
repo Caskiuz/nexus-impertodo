@@ -64,14 +64,43 @@ export function pct(n: number | null | undefined): string {
   return (n || 0).toLocaleString('es-MX', { maximumFractionDigits: 1 }) + '%';
 }
 
+// Zona horaria del negocio: la app opera en Torreón, Coahuila (México).
+// Todas las fechas/horas que se muestran o agrupan usan esta zona, sin importar
+// dónde corra el servidor (Vercel corre en UTC) ni el reloj del visitante.
+export const TZ = 'America/Mexico_City';
+
+/** Fecha + hora local de México (equivalente a toLocaleString('es-MX')). */
+export function dateTimeStr(d: Date | string): string {
+  const x = typeof d === 'string' ? new Date(d) : d;
+  return x.toLocaleString('es-MX', { timeZone: TZ });
+}
+
+/** Hora local de México en formato HH:mm. */
+export function timeStr(d: Date | string): string {
+  const x = typeof d === 'string' ? new Date(d) : d;
+  return x.toLocaleTimeString('es-MX', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+}
+
+/** Clave de día local de México (YYYY-MM-DD), para agrupar consumos y kardex. */
+export function dayKeyMX(d: Date | string): string {
+  const x = typeof d === 'string' ? new Date(d) : d;
+  return x.toLocaleDateString('en-CA', { timeZone: TZ }); // en-CA produce YYYY-MM-DD
+}
+
+/** Fecha local de México en formato dd/mm/aaaa. */
+export function dateFullStr(d: Date | string): string {
+  const x = typeof d === 'string' ? new Date(d) : d;
+  return x.toLocaleDateString('es-MX', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 export function dateStr(d: Date | string): string {
   const x = typeof d === 'string' ? new Date(d) : d;
-  return x.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+  return x.toLocaleDateString('es-MX', { timeZone: TZ, day: '2-digit', month: 'short' });
 }
 
 export function isoDate(d: Date | string): string {
   const x = typeof d === 'string' ? new Date(d) : d;
-  return x.toISOString().slice(0, 10);
+  return x.toLocaleDateString('en-CA', { timeZone: TZ });
 }
 
 export function periodOf(d: Date | string): string {

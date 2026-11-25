@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { requireUser, logAudit } from '@/lib/session';
 import { computeQuote, type QuoteInput, type ExtraInput, type SystemDef } from '@/lib/calc';
+import { dayKeyMX } from '@/lib/constants';
 import { recordBusinessEvent } from '@/lib/events';
 
 const ExtraSchema = z.object({
@@ -124,7 +125,7 @@ export async function saveQuoteAction(payload: QuotePayload): Promise<{ ok: bool
   } else {
     const last = await prisma.quote.findFirst({ where: { unitId }, orderBy: { createdAt: 'desc' } });
     const lastNum = last ? parseInt(last.folio.split('-')[1] || '0', 10) : 40;
-    folio = `${new Date().getFullYear()}-${String((Number.isFinite(lastNum) ? lastNum : 40) + 1).padStart(3, '0')}`;
+    folio = `${dayKeyMX(new Date()).slice(0, 4)}-${String((Number.isFinite(lastNum) ? lastNum : 40) + 1).padStart(3, '0')}`;
   }
 
   const quote = await prisma.$transaction(async (tx) => {

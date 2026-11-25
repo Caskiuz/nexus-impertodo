@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireUser, getActiveUnitId } from '@/lib/session';
-import { fmt, dateStr } from '@/lib/constants';
+import { fmt, dateStr, dateTimeStr } from '@/lib/constants';
 import AgentCards from '@/components/AgentCards';
 import PriorityAI from '@/components/PriorityAI';
 import ModuleExplainer from '@/components/ModuleExplainer';
@@ -81,7 +81,7 @@ export default async function AgentesPage() {
                 <div>
                   <b>{a.action}</b> {a.ref ? `· ${a.ref}` : ''}
                   <div className="mini">
-                    {a.createdAt.toLocaleString('es-MX')} · {a.role || 'sistema'}
+                    {dateTimeStr(a.createdAt)} · {a.role || 'sistema'}
                   </div>
                 </div>
               </div>

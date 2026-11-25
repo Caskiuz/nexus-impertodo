@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { getActiveUnitId, type SessionUser } from '@/lib/session';
 import { askGemini } from '@/lib/gemini';
+import { dateStr, dayKeyMX } from '@/lib/constants';
 
 function fmt(n: number) {
   return '$' + Math.round(n || 0).toLocaleString('es-MX');
@@ -42,14 +43,14 @@ export async function POST() {
   const lowStock = inventory.filter((i) => i.stock < i.min);
 
   const lines = [
-    `Fecha: ${new Date().toLocaleDateString('es-MX')} · Unidad: ${unitId ? 'seleccionada' : 'todas'}`,
+    `Fecha: ${dayKeyMX(new Date())} · Unidad: ${unitId ? 'seleccionada' : 'todas'}`,
     `Cotizaciones por aprobar: ${pendingQuotes.length}${pendingQuotes.length ? ' (' + pendingQuotes.slice(0, 5).map((q) => `${q.folio} ${fmt(q.total)}`).join(', ') + ')' : ''}`,
     `Margen bajo piso (${floor}%): ${lowMargin.map((q) => `${q.folio} ${(q.margin * 100).toFixed(0)}%`).join(', ') || 'ninguna'}`,
     `Cotizaciones enviadas sin respuesta +14 días: ${stale.map((q) => `${q.folio} (${Math.round((Date.now() - q.createdAt.getTime()) / 86400000)} días)`).join(', ') || 'ninguna'}`,
     `Comprobantes en bandeja: ${pendingDocs.length}; con alerta: ${flaggedDocs.map((d) => `${d.supplier} (${d.warn})`).join(', ') || 'ninguno'}`,
     `Facturas vencidas: ${overdue.map((i) => `${i.clientName} ${fmt(i.amount)}`).join(', ') || 'ninguna'}`,
     `Productos bajo mínimo: ${lowStock.map((i) => `${i.name} ${i.stock}/${i.min}`).join(', ') || 'ninguno'}`,
-    `Licitaciones próximas: ${tenders.slice(0, 3).map((t) => `${t.convener} match ${t.match}% apertura ${t.openingDate.toLocaleDateString('es-MX')}`).join(', ') || 'ninguna'}`
+    `Licitaciones próximas: ${tenders.slice(0, 3).map((t) => `${t.convener} match ${t.match}% apertura ${dateStr(t.openingDate)}`).join(', ') || 'ninguna'}`
   ];
 
   const system = [
